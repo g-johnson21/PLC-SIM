@@ -226,8 +226,11 @@ Stability does not actually rest on the sub-step size. Two guards do:
 - **First-order lags use `1 - exp(-dt/tau)`,** which is exact for any `dt`, rather than
   the `dt/tau` approximation that blows up when `dt > tau`.
 
-Acceptance check 5 runs the same hotfire at `dt = 0.001`, `0.01` and `0.1 s`; the traces
-agree to well under a psi.
+`tests/plant/test_step_size.py` presses, fires and vents at `dt = 0.001`, `0.01` and `0.1 s`.
+Any step at or above `substep_dt` gives identical traces, and so does a 1 ms step when
+`substep_dt` is 1 ms. At the default 2 ms sub-step a 1 ms step integrates more finely, so
+the 0.5 L pocket behind C1 (PT2) differs by about 14 psi while S1 flows and the engine
+manifolds by about 6 psi; tank pressures agree within 2 psi.
 
 ## 5. Known weaknesses
 

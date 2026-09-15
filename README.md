@@ -64,7 +64,10 @@ npm test
 Measurement fixtures under `backend/tests/fixtures/` are slices of the real 2026-09-11 recordings; the
 README there names each source file and row range. `tests/runtime` and `tests/protocol` pin the scan
 loop and the wire contract (`docs/runtime.md`, `docs/protocol.md`); the protocol tests serve on an
-ephemeral port, never 8765. Strict xfails mark known defects with the reason.
+ephemeral port, never 8765. `tests/plant` checks conservation, the flow limiter, step-size
+invariance, extreme configs, the config YAML, `calibrate` piece by piece, and calibrated replay error
+ceilings on the fixture slices, without needing `testdata/`. Strict xfails mark known defects with the
+reason.
 
 ## Calibration status
 The plant model has 105 named constants, listed with their provenance in `docs/plant-model.md`.

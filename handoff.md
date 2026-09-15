@@ -8,8 +8,8 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
   outdated by phase 2: https://claude.ai/code/artifact/ec3bb330-2764-4300-aa59-98860f7d38c2
 - **Phase 2** implements the stand team's answers of 2026-09-13 (`docs/decisions.md` D12) and the S1/S2
   rule derived from the data (D13).
-- **Backend tests:** `python -m pytest -q` from `backend/` gives 423 passed, 6 xfailed (the task 3 engine
-  bugs).
+- **Backend tests:** `python -m pytest -q` from `backend/` gives 539 passed, 8 xfailed in about 30 s (six
+  task 3 engine bugs, two task 6 plant guards).
 - **Frontend:** `npm test` gives 105 passed. `npm run build` passes. `npm run lint` shows one existing
   warning in `src/gc/useSeriesBuffer.ts`.
 - **Demo:** `python -m draco_sim.runtime.demo` exits 0 with the new hotfire procedure.
@@ -24,8 +24,8 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
 | 3 | PLC engine regression suite | 92 tests landed and pass; 6 xfails document two engine bugs; unreviewed |
 | 4 | Control panel update for the new abort semantics | Done 2026-09-15: panel, IDE toolbar, mock and 12 vitest cases; browser-checked against the real backend |
 | 5 | Scan-loop and protocol regression tests | Done 2026-09-15; both defects it found fixed by user decision D17 the same day |
-| 6 | Plant regression tests | Queued, unblocked |
-| 7 | Integration re-review and republish | Queued, blocked on tasks 3 and 6 |
+| 6 | Plant regression tests | Done 2026-09-15: 116 tests, 2 strict xfails for divide-by-zero configs awaiting the user |
+| 7 | Integration re-review and republish | Queued, blocked on the task 3 review |
 
 ## Working rules for whoever resumes
 
@@ -466,7 +466,7 @@ None for task 5. Confirm the two D17 orchestrator refinements with the user:
 
 ---
 
-## Task 6: Plant regression tests (queued)
+## Task 6: Plant regression tests (done 2026-09-15)
 
 ### 1. Current goal
 Cover:
@@ -481,19 +481,71 @@ Cover:
 Do not add golden-value tests on placeholder constants.
 
 ### 2. Current development status
-Unblocked since 2026-09-14. Task 2, step 1 describes how to test `calibrate`.
+Done 2026-09-15, inline with no agents. No production code changed. The suite runs in about 15 s
+without `testdata/`. On disk, `backend/tests/plant/` (116 passed, 2 strict xfails):
+- **`conftest.py`:** a session `runs` fixture that copies the 12:36, 12:49 and 12:52 fixture slices
+  under their real recording names, so `calibrate.Runs` and the annotated RUD windows work.
+- **`helpers.py`:** `CALIBRATED`/`UNCALIBRATED`, `with_values`, `make_plant` (from
+  `demo.INITIAL`), `gas_mass`, and `FUEL_LBM` 39.5 (plant-model.md §6).
+- **`test_conservation.py`:** GN2 conserved to 1e-12 while pressing with the vents settled shut; gas
+  lost while venting equals exactly the PB1 + PB3 flow; venting never adds gas.
+- **`test_limiter.py`:** a `_move` sweep over volumes 1e-6–1 m³, areas and dt up to 10 s (no inversion,
+  mass conserved), vents never drop below the sink, no reverse flow, and the pressurant chain stays
+  ordered through a press and vent at 2 ms and 100 ms sub-steps.
+- **`test_step_size.py`:** a press, burn and vent scenario. 1 ms and 100 ms steps are identical at a 1 ms
+  sub-step, 10 ms and 100 ms are identical at the default, and 1 ms stays within 5 % of each channel's
+  swing.
+- **`test_adversarial.py`:** 16 extreme configs, dry and overfilled, keep sensors, masses, pressures,
+  flows and levels finite; meaningless dt is a no-op; the sub-step cap warns; negative initial pressures
+  clamp.
+- **`test_config.py`:** YAML round trips, partial and empty files, six rejection cases, source and unit
+  validators, unit conversions, no default claiming `calibrated`, `calibration.yaml` provenance, the
+  overlay touching only fitted constants, and `Plant()` defaulting to it.
+- **`test_calibrate.py`:** the search helpers; on the slices, `fit_dead_time` (PB2/PB4 lag within
+  0.05 s, D15), `_observed_rate` and `fit_press` for the one isolated S2 pulse (within 2× of `cda_s2`),
+  and `fit_gas_volumes` (a physical fuel load). `cda_pb1` and `cda_pb3` beat 0.5×/2× and 0.8×/1.25×
+  on the 12:49 blowdown costs, and `write_calibration` reproduces `calibration.yaml` byte for byte.
+- **`test_replay.py`:** calibrated RMS ceilings, about 1.25× the values measured, on 17 channels of
+  the three slices. Calibration at least 40 % better than uncalibrated on PT4/PT14 in 12:49 and 12:52,
+  12:49 fuel correlation ≥ 0.85, RUD rows excluded, and replay determinism.
+- **Docs:** `docs/plant-model.md` §4 had claimed 1 ms/10 ms/100 ms traces "agree to well under a psi".
+  It now gives the measured result. README "Tests" mentions the suite.
+
+**Two defects found** (strict xfails, awaiting the user):
+1. **`min_ullage_frac` 0 with a full tank** divides by zero. `_update_ullage_volumes` assigns
+   `GasNode.volume` directly and bypasses the constructor's 1e-6 m³ floor.
+2. **`throat_area` 0** divides by zero in `_substep` once both propellants flow.
+
+Candidate one-line fixes: floor the ullage volume at 1e-6 m³, and guard the throat area, or reject
+non-positive values in `PlantConfig`. `tank_volume` 0 and `max_substeps` 0 also divide by zero, but
+they are nonsense configs and are not tested.
 
 ### 3. Key decisions made
-Calibration will move the constants, so tests assert properties and error ceilings rather than exact values.
+- Calibration will move the constants, so tests assert properties and error ceilings rather than exact
+  values.
+- Run `calibrate` on the committed slices rather than `testdata/`, so the suite works on a fresh clone.
+  Full golden-section fits take about 9 s each, so the tests check each committed area sits in its
+  cost valley instead of re-fitting it.
+- Conservation must start with PB1/PB3 settled shut. Commanding them shut from a de-energised start leaks
+  for the dead time plus the stroke, and a 4000 psi charge lifts the reliefs.
 
 ### 4. What worked and what failed
-Nothing attempted yet.
+- **Worked:** probing each property before asserting it. The 12:49 slice reproduces the calibration
+  notes' PB2/PB4 lags (0.390 and 0.392 s) and the `cda_pb3` RMS (39.6 against 39.7 psi).
+- **Failed:** the first conservation probe leaked 0.07 % through the still-closing vents. The first
+  "venting never adds gas" assertion failed on 3e-15 kg of summation noise.
 
 ### 5. Immediate next steps
-After task 2 lands, launch a fresh agent at the Opus tier.
+1. **Ask the user** about the two xfails: fix the plant, add `PlantConfig` validation, or leave them.
+2. `fit_press(..., "S1")` crashes on data with no isolated S1 pulse (`min` of an empty array). It is
+   unreachable with the full recordings; note it if `calibrate` gains a partial-data mode.
 
 ### 6. Open risks, questions, or blockers
-Replay error ceilings can be brittle; keep fixtures small.
+- Replay ceilings carry about 25 % headroom. A deliberate recalibration that trades one channel for
+  another may need them re-measured; the docstring says how they were set.
+- A tiny pressurant volume at a coarse sub-step starves flow, because the limiter caps each sub-step at
+  equalising the pocket. That is not a stability problem, but it is another step-size dependence
+  behind `substep_dt`.
 
 ---
 
@@ -503,7 +555,7 @@ Replay error ceilings can be brittle; keep fixtures small.
 Re-verify every interface contract after phase 2, then republish the integration review at the same URL.
 
 ### 2. Current development status
-Blocked on task 6 and on the task 3 review.
+Blocked on the task 3 review. Task 6 is done (2026-09-15).
 
 ### 3. Key decisions made
 Verify by running the system, not by reading reports. The republished review must replace the answered

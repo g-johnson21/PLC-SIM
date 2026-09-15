@@ -154,4 +154,15 @@ async def test_compile_result_carries_variables_errors_and_ladder_text():
         assert bad["ok"] is False
         assert {"message", "line", "col", "path"} <= set(bad["errors"][0])
         assert bad["errors"][0]["line"] == 2
+        assert bad["errors"][0]["program"] == "bad"
+
+        broken_chart = {"version": 1, "language": "SFC", "name": "bad_chart", "steps": [
+            {"name": "A", "initial": True, "actions": [
+                {"qualifier": "N", "body": "PB2 := TRUE;\nPB3 := * 1;"}]}], "transitions": []}
+        bad_sfc = await c.ok("program.compile", name="bad_chart", language="SFC", source=broken_chart)
+        assert bad_sfc["ok"] is False
+        [error] = bad_sfc["errors"]
+        assert (error["program"], error["path"], error["line"], error["col"]) == (
+            "bad_chart", "/steps/0/actions/0/body", 2, 8)
+        assert "unexpected '*'" in error["message"]
         assert (await c.ok("program.list"))["programs"] == []

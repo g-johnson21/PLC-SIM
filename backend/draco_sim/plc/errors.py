@@ -30,6 +30,9 @@ class CompileError(Exception):
         self.errors: list[CompileError] = list(errors) if errors is not None else [self]
         super().__init__(self._render())
 
+    def __str__(self) -> str:
+        return self._render()
+
     def location(self) -> str:
         bits = []
         if self.program:
@@ -78,7 +81,7 @@ class CompileError(Exception):
 
 @dataclass
 class PlcFault:
-    """A runtime fault. The program that raised it is halted until clear_faults()."""
+    """A runtime fault retained until clear_faults(); an abort can restart an SFC's safing chain."""
 
     program: str
     kind: str

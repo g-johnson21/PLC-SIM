@@ -44,15 +44,21 @@ def test_other_programs_still_run_and_the_faulting_writes_are_not_reported():
     assert (out["DO1"], out["DO2"], out["DO3"], var(rt, "n", "last")) == (False, True, True, 2)
 
 
-AT_THE_CAP = pytest.mark.xfail(strict=True, reason=(
-    "engine bug: For/While/Repeat in plc/nodes.py do `n += 1; if n >= cap` with cap 10000, so the "
-    "10 000th iteration already faults; spec §4.2 and §7.5 fault only when a loop exceeds 10 000"))
+@pytest.mark.parametrize("loop", sorted(LOOPS))
+@pytest.mark.parametrize("count,faults", [(9_999, False), (10_000, False), (10_001, True)])
+def test_each_loop_is_capped_at_ten_thousand_iterations(loop, count, faults):
+    rt = run_st("VAR n : INT; i : INT; END_VAR\n" + LOOPS[loop].format(count=count))
+    assert [f.kind for f in rt.scan(0.01).faults] == (["loop"] if faults else [])
+    assert var(rt, "n") == (0 if faults else count)
 
 
 @pytest.mark.parametrize("loop", sorted(LOOPS))
-@pytest.mark.parametrize("count,faults", [pytest.param(10_000, False, marks=AT_THE_CAP), (10_001, True)])
-def test_each_loop_is_capped_at_ten_thousand_iterations(loop, count, faults):
-    rt = run_st("VAR n : INT; i : INT; END_VAR\n" + LOOPS[loop].format(count=count))
+@pytest.mark.parametrize("escape", ["EXIT", "RETURN"])
+@pytest.mark.parametrize("count,faults", [(10_000, False), (10_001, True)])
+def test_loop_exits_obey_the_iteration_cap(loop, escape, count, faults):
+    body = f"n := n + 1; IF n = {count} THEN {escape}; END_IF"
+    source = LOOPS[loop].format(count=20_000).replace("n := n + 1;", body)
+    rt = run_st("VAR n : INT; i : INT; END_VAR\n" + source)
     assert [f.kind for f in rt.scan(0.01).faults] == (["loop"] if faults else [])
     assert var(rt, "n") == (0 if faults else count)
 

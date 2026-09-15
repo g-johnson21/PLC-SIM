@@ -494,6 +494,14 @@ true) and applies it at the top of the **next** `scan()`:
   the set of steps reachable from `abort_step` — may fire. The safing chain therefore runs
   normally while the normal chain stays frozen, and an SFC can never advance past an abort.
 
+**Disabled and halted charts still run their abort chains.** Applying a fresh abort clears the
+execution halt of each chart with an `abort_step`, but keeps its fault history and variables.
+While latched, the chain executes even if the program is disabled; the enable setting itself is
+preserved and takes effect again when the latch is cleared. A new fault in an abort chain still
+rolls back and halts that chart (§7.5); later scans do not retry it automatically. `clear_faults()`
+allows a retry, or a new explicit `trigger_abort()` restarts the chain at its head. Programs
+without an abort chain retain their existing halt and enable settings.
+
 **A latched abort gates every sequence, including ones that were not running when it latched.**
 While `abort_active()` is true, `start_sfc(name)` **raises `PlcStateError`** and starts nothing —
 it is never silently ignored. Without this, an operator or a UI could arm a fresh sequence into a
@@ -616,7 +624,7 @@ the programs in that order. `trigger_abort()` is applied before any program runs
 | `globals()` / `write_globals(mapping)` | read / set `VAR_GLOBAL` values from outside (operator setpoints, enables) |
 | `force(name, value)` / `unforce(name)` / `forced()` | see §7.4 |
 | `faults()` / `clear_faults()` / `halted_programs()` | see §7.5 |
-| `set_program_enabled(name, bool)` / `program_enabled()` | skip a program in the scan; its outputs hold |
+| `set_program_enabled(name, bool)` / `program_enabled()` | skip a program in the scan; its outputs hold. While an abort is latched, SFC abort chains execute despite a disabled setting (§6.4) |
 | `reset()` | cold restart: variables to initial values, charts back to construction state (`autostart` re-applied), output image cleared, faults **and the abort latch** cleared, `SYS_TIME` and the scan counter to zero. Forces are kept and re-applied |
 | `scan_index` / `sim_time_s` | scan counter (first scan is 1) and accumulated simulated seconds |
 
@@ -662,13 +670,16 @@ exceeding 10 000 iterations, or an internal engine error) **never escapes `scan(
 1. the faulting program's effects for that scan are rolled back — its variables, its function
    block state, its chart state, the global variables and the output image all return to what
    they were when the program started this scan, so its outputs hold their last good state;
-2. the program is **halted**: it is skipped on every later scan;
+2. the program is **halted**: it is skipped on later scans until explicit recovery;
 3. the fault appears in `ScanResult.faults` and in `runtime.faults()`;
 4. every other program in the list still runs, in order, in the same scan.
 
 `clear_faults()` empties the fault list and restarts every halted program from the state it had
 before the faulting scan. This mirrors how a PLC treats a program fault: stop the offending
 logic, hold its outputs, keep the rest of the machine scanning, and require an explicit reset.
+An explicit abort is also a recovery path for a chart with an `abort_step`: it abandons the old
+step and starts the safing chain while retaining the fault history (§6.4). It does not recover
+other halted programs or suppress faults raised by the abort chain itself.
 
 ```python
 @dataclass

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 
 import pytest
 
@@ -239,6 +240,40 @@ def test_an_abort_while_a_valve_writer_is_faulted_switches_it_off_and_returns():
     sim.plc_clear_faults()
     sim.run_scans(3)
     assert outputs(sim)["PB2"] is False
+
+
+@pytest.mark.parametrize("fault_step", ["RUN", "ABORT"])
+def test_chart_fault_recovery_and_abort_return_of_control(fault_step):
+    source = sfc("seq", [("START", "PB2 := TRUE;"), ("RUN", ""),
+                         ("ABORT", "PB2 := FALSE;"), ("SAFE", "PB1 := TRUE;")],
+                 [("START", "RUN", "START.T >= T#20ms"),
+                  ("ABORT", "SAFE", "ABORT.T >= T#40ms")], abort_step="ABORT")
+    doc = json.loads(source.source)
+    doc["vars"] = [{"name": "trip", "type": "BOOL", "scope": "VAR_GLOBAL", "init": True},
+                   {"name": "z", "type": "INT"}, {"name": "q", "type": "INT"}]
+    target = next(s for s in doc["steps"] if s["name"] == fault_step)
+    target["actions"].append({"qualifier": "N", "body": "IF trip THEN q := 1 / z; END_IF"})
+    sim = make_sim(examples=False)
+    sim.load_programs([replace(source, source=json.dumps(doc))])
+    sim.plc_run()
+    sim.sequence_start("seq")
+    sim.run_scans(2)
+    assert outputs(sim)["PB2"] is True
+    assert sim.snapshot(["plc"])["plc"]["halted"] == (["seq"] if fault_step == "RUN" else [])
+    sim.abort()
+    sim.step()
+    assert latched(sim) and active_steps(sim, "seq") == ["ABORT"]
+    if fault_step == "ABORT":
+        assert sim.snapshot(["plc"])["plc"]["halted"] == ["seq"]
+        sim.run_scans(5)
+        assert latched(sim) and sim.waiting_on() == ["seq at ABORT"]
+        sim.write({"plc.globals.trip": False})
+        sim.plc_clear_faults()
+        sim.step()
+    assert outputs(sim)["PB2"] is False
+    run_to_return(sim)
+    assert outputs(sim)["PB1"] is True and outputs(sim)["PB2"] is False
+    assert sim.snapshot(["plc"])["plc"]["halted"] == []
 
 
 def test_sim_reset_is_the_instructor_reset_that_clears_a_latch():

@@ -69,6 +69,10 @@ invariance, extreme configs, the config YAML, `calibrate` piece by piece, and ca
 ceilings on the fixture slices, without needing `testdata/`. Strict xfails mark known defects with the
 reason.
 
+`tests/plc` covers the engine independently: ST, ladder, SFC actions and aborts, function blocks,
+forcing, fault rollback, write sets, diagnostics and determinism. All 219 cases pass, including
+the 10,000-iteration boundary and abort chains in disabled or halted charts; no PLC xfails remain.
+
 ## Calibration status
 The plant model has 105 named constants, listed with their provenance in `docs/plant-model.md`.
 `python -m draco_sim.plant.calibrate` fits five of them to the 2026-09-11 recordings: the PB valve

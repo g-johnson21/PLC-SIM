@@ -205,6 +205,11 @@ cleared, and a second `[abort]` event lists them (`output forces cleared: MV-LOX
 input forces stay, since the thresholds read the cards anyway. `abort.latched` becomes
 true and `abort.tripped` records `{tag, value, threshold, t, source}`.
 
+A chart disabled or halted before the latch still executes its abort chain from that scan.
+The engine clears the chart's old execution halt, retains its fault history and enable setting,
+and overrides that setting for the duration of the latch (`plc-language.md` §6.4). A new fault
+inside the chain still halts execution; fix its cause and use `plc.clear_faults` to retry it.
+
 **Outputs at the latch.** Every output tag that no loaded abort chain writes goes to its
 fail-safe state on the latch scan and stays there until control returns (rows A1–A2 in
 §2). A disabled program's coils therefore do not hold: `bangbang_lox` loaded on its own

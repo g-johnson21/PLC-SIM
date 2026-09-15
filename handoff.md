@@ -8,8 +8,8 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
   outdated by phase 2: https://claude.ai/code/artifact/ec3bb330-2764-4300-aa59-98860f7d38c2
 - **Phase 2** implements the stand team's answers of 2026-09-13 (`docs/decisions.md` D12) and the S1/S2
   rule derived from the data (D13).
-- **Backend tests:** `python -m pytest -q` from `backend/` gives 539 passed, 8 xfailed in about 30 s (six
-  task 3 engine bugs, two task 6 plant guards).
+- **Backend tests:** task 3 completion run on 2026-09-15: `python -m pytest -q` from `backend/` gives
+  568 passed, 2 xfailed in 28.87 s. Only the two task 6 plant guards remain xfailed; all 219 PLC cases pass.
 - **Frontend:** `npm test` gives 105 passed. `npm run build` passes. `npm run lint` shows one existing
   warning in `src/gc/useSeriesBuffer.ts`.
 - **Demo:** `python -m draco_sim.runtime.demo` exits 0 with the new hotfire procedure.
@@ -21,11 +21,11 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
 |---|---|---|
 | 1 | Absolute abort and automatic return of control | Done 2026-09-14: docs updated, code reviewed and probed, user decision D14 implemented |
 | 2 | Plant phase 2: IPA, board hold removal, calibration | Done 2026-09-14: five constants calibrated, vent-open answer, docs, D15 |
-| 3 | PLC engine regression suite | 92 tests landed and pass; 6 xfails document two engine bugs; unreviewed |
+| 3 | PLC engine regression suite | Done 2026-09-15: both engine bugs and the abort-test finding fixed; 219 passed, no PLC xfails |
 | 4 | Control panel update for the new abort semantics | Done 2026-09-15: panel, IDE toolbar, mock and 12 vitest cases; browser-checked against the real backend |
 | 5 | Scan-loop and protocol regression tests | Done 2026-09-15; both defects it found fixed by user decision D17 the same day |
 | 6 | Plant regression tests | Done 2026-09-15: 116 tests, 2 strict xfails for divide-by-zero configs awaiting the user |
-| 7 | Integration re-review and republish | Queued, blocked on the task 3 review |
+| 7 | Integration re-review and republish | Queued, unblocked by task 3 completion |
 
 ## Working rules for whoever resumes
 
@@ -132,10 +132,10 @@ Finished on 2026-09-14 (second pass):
 1. **Start tasks 4 and 5.** The docs are current, including D14, so their briefs can cite them.
 
 ### 6. Open risks, questions, or blockers
-- **Tested since task 5.** An abort during `gn2_purge`, two charts with abort chains, a chain with no
-  final step and an abort while a valve writer is faulted are now covered. Still untested: a faulted
-  abort *chain* that never reaches `ABORT_DONE`, which would hold the latch; `plc.clear_faults` stays
-  allowed and is the likely escape.
+- **Tested since tasks 3 and 5.** An abort during `gn2_purge`, two charts with abort chains, a chain
+  with no final step and an abort while a valve writer is faulted are covered. Task 3 also verifies
+  a faulted SFC entering its abort chain, and a fault inside an abort chain holding the latch until
+  its cause is fixed and `plc.clear_faults` lets the chain finish.
 - **Hold before return.** The real GC logged "Abort cleared — stand is DISARMED" 3.0 s after its abort
   sequence ended. The simulator returns control immediately at chain end and does not model arming. Ask
   the stand team.
@@ -252,51 +252,66 @@ Done 2026-09-14, inline with no agents. On disk:
 
 ---
 
-## Task 3: PLC engine regression suite
+## Task 3: PLC engine regression suite (done 2026-09-15)
 
 ### 1. Current goal
 Pin the documented semantics of `draco_sim.plc` with a fast, deterministic pytest suite that imports
 only the engine.
 
 ### 2. Current development status
-`backend/tests/plc/` holds 92 tests in 10 files plus `helpers.py`, covering:
-- structured text parsing
-- function blocks
-- SFC evolution and the abort model
-- ladder, including `ladder_to_text`
-- faults, forcing and determinism
-- `output_writes`
-- compile errors with JSON-pointer paths
+Reviewed against `docs/plc-language.md` and completed on 2026-09-15. `backend/tests/plc/` now holds
+97 test functions in 10 files plus `helpers.py`, covering ST parsing, function blocks, SFC evolution
+and aborts, ladder and `ladder_to_text`, faults, forcing, determinism, write sets and diagnostics.
 
-All pass except 6 xfails. The agent hit the session limit before reporting, so the suite is unreviewed.
-The xfails document two engine bugs, and the engine was deliberately left unmodified:
+**All three issues resolved:**
+1. **Diagnostic rendering:** `plc/errors.py` now renders `CompileError.__str__()` from the current
+   fields, so program names and JSON pointers attached after parsing appear in the text. Tests cover
+   ST, SFC action bodies and transition conditions, and individual/aggregate syntax diagnostics.
+2. **Loop cap:** `For`, `While` and `Repeat` in `plc/nodes.py` check the cap before entering an
+   iteration. Exactly 10,000 iterations are allowed; iteration 10,001 faults before its body runs.
+   Tests cover 9,999/10,000/10,001 and `EXIT`/`RETURN` at and beyond the cap. All six old xfails removed.
+3. **Disabled/halted abort charts (review finding P2):** the old test restored execution before
+   checking outputs, hiding an abort scan that reported `ABORT` while leaving `DO1` open and running
+   no actions. `plc/runtime.py` now lets these charts execute their abort chains on the latch scan.
+   The strengthened test checks output writes and actions immediately, then chain completion without
+   manual recovery, for disabled, halted and combined states. Additional tests cover disabled-state
+   preservation, faults inside the chain, explicit recovery, and unaffected halted programs without
+   an abort chain.
 
-1. **`CompileError` renders its message at construction.** It calls `super().__init__(self._render())`,
-   so a program name, pointer or position filled in later never reaches `str()`. Three cases: an SFC
-   action body, an SFC transition condition, and structured text.
-2. **Loop cap off by one.** `For`, `While` and `Repeat` in `plc/nodes.py` fault on the 10,000th
-   iteration instead of after 10,000 iterations. Three cases.
+**Integration and docs:**
+- `tests/runtime/test_abort_lifecycle.py` verifies a faulted SFC safes and returns control, and a
+  fault inside an abort chain holds the latch until its cause is fixed and faults are cleared.
+- `tests/protocol/test_abort_and_programs.py` checks ST and SFC syntax diagnostics over WebSocket,
+  including program, pointer and fragment-relative line/column. The IDE's problems list and editor
+  markers were checked in source: they consume these structured fields, not `str(CompileError)`.
+- `docs/plc-language.md` §6.4, §7.2 and §7.5, `docs/runtime.md` §3 and README are updated.
+
+**Validation:** PLC **219 passed in 0.44 s**, no xfails; full backend **568 passed, 2 xfailed in
+28.87 s** (only task 6 plant guards); frontend **105 passed**; `npm run build` passes with its bundle-size
+warning. The new assertions first reproduced the failures before the engine fixes.
 
 ### 3. Key decisions made
-- Do not modify the engine during the test pass; mark real bugs xfail with precise reasons.
-- Build programs inline, and do not depend on `hotfire.sfc.json`.
-- Opus tier.
-- Budget about 10 s; the whole backend suite takes 3.7 s.
+- The original pass was tests only. The user authorized completion, including engine fixes, on 2026-09-15.
+- Engine tests build programs inline and import only the engine; they do not depend on stand examples.
+- The documented cap permits 10,000 iterations; check before executing an extra body so `EXIT` and
+  `RETURN` cannot bypass it.
+- An explicit abort starts the safing chain even after a prior program fault: clear that chart's
+  execution halt once, retain fault history and variables, and override a disabled setting only while
+  latched. Preserve the setting itself. New faults inside the chain still halt it; later scans do not
+  automatically retry. `clear_faults()` allows a retry; a new explicit engine `trigger_abort()` starts
+  the chain again. Other halted programs are unaffected.
 
 ### 4. What worked and what failed
-- **Worked:** the suite landed complete and runs fast.
-- **Failed:** three launches were cut off, and the final one left no report.
+- **Worked:** comparing assertions with the contract and probing outputs before test recovery calls
+  exposed the masked abort discrepancy. Tests now check both successful safing and fault containment.
+- **Failed historically:** three launches were cut off, and the original test agent left no report.
 
 ### 5. Immediate next steps
-1. **Review the suite** against `docs/plc-language.md`. Spot-check the SFC evolution and abort-model
-   tests for assertions that pin implementation quirks rather than documented behaviour.
-2. **Confirm the documented loop-cap semantics.** The xfail assumes 10,000 iterations are allowed.
-3. **Fix both engine bugs** with a small fresh Opus agent, then remove the xfail markers.
+None for task 3. Task 7 is unblocked.
 
 ### 6. Open risks, questions, or blockers
-- Unreviewed tests may encode wrong expectations.
-- The `CompileError` fix changes error text that the IDE displays and that `compile_result` carries.
-  Re-check the frontend's compile-error display afterwards.
+No outstanding task 3 findings. A fault in an abort chain still requires explicit recovery as documented;
+the simulator test verifies recovery from a nonterminal abort step through automatic return of control.
 
 ---
 
@@ -555,7 +570,8 @@ they are nonsense configs and are not tested.
 Re-verify every interface contract after phase 2, then republish the integration review at the same URL.
 
 ### 2. Current development status
-Blocked on the task 3 review. Task 6 is done (2026-09-15).
+Unblocked: task 3 review and fixes are complete (2026-09-15), including the abort-test finding and
+the two engine bugs. Task 6 is done (2026-09-15).
 
 ### 3. Key decisions made
 Verify by running the system, not by reading reports. The republished review must replace the answered

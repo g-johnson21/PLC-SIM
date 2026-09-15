@@ -205,6 +205,9 @@ class PlcRuntime:
             for ps in self._states:
                 if ps.sfc is not None:
                     ps.prog.sfc.apply_abort(ps.sfc, self._scan_index)
+                    if ps.prog.sfc.abort_step is not None:
+                        # A fresh abort enters the safing chain even after a program fault.
+                        ps.halted = False
         self._sys["SYS_ABORT"] = self._abort
         self._apply_forces()
 
@@ -212,7 +215,9 @@ class PlcRuntime:
         self._outputs.written.clear()
         faults: list[PlcFault] = []
         for ps in self._states:
-            if ps.halted or not ps.enabled:
+            aborting = (self._abort and ps.sfc is not None
+                        and ps.sfc.aborted and ps.sfc.running)
+            if ps.halted or (not ps.enabled and not aborting):
                 continue
             ctx = ps.ctx
             ctx.dt = dt
@@ -358,7 +363,7 @@ class PlcRuntime:
 
     def set_program_enabled(self, name: str, enabled: bool) -> None:
         """Skip a program in the scan. Its outputs hold; the scan loop uses this to
-        stop regulation while an abort is active."""
+        stop regulation while an abort is active. Latched SFC abort chains still run."""
         for ps in self._states:
             if ps.prog.name.upper() == str(name).upper():
                 ps.enabled = bool(enabled)

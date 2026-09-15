@@ -99,12 +99,6 @@ BODY_SYNTAX = doc_sfc([step("A", initial=True), step("B", action("DO1 := TRUE;\n
 CONDITION_SYNTAX = doc_sfc(A_B, [trans("A", "B", "DI1 AND")])
 BODY_SEMANTIC = doc_sfc([step("A", action("DO1 := TRUE;\n  AI1 := 1.0;"), initial=True)])
 
-STALE_RENDER = pytest.mark.xfail(strict=True, reason=(
-    "engine bug: CompileError.__init__ freezes str() via super().__init__(self._render()) and has no "
-    "__str__; program/path are set on parser diagnostics after construction (raise_all sets "
-    "e.program), so syntax errors render as 'line:col: message' without the §8 program:pointer prefix"))
-
-
 @pytest.mark.parametrize("doc,path,position", [
     (BODY_SYNTAX, "/steps/1/actions/0/body", (2, 10)),
     (CONDITION_SYNTAX, "/transitions/0/condition", (1, 8)),
@@ -117,13 +111,21 @@ def test_st_fragments_carry_pointer_and_fragment_relative_position(doc, path, po
 
 @pytest.mark.parametrize("language,source,location", [
     ("SFC", BODY_SEMANTIC, "bad:/steps/0/actions/0/body:2:3"),
-    pytest.param("SFC", BODY_SYNTAX, "bad:/steps/1/actions/0/body:2:10", marks=STALE_RENDER),
-    pytest.param("SFC", CONDITION_SYNTAX, "bad:/transitions/0/condition:1:8", marks=STALE_RENDER),
-    pytest.param("ST", "VAR x : INT; END_VAR\nx := * 2;", "bad:2:6", marks=STALE_RENDER),
+    ("SFC", BODY_SYNTAX, "bad:/steps/1/actions/0/body:2:10"),
+    ("SFC", CONDITION_SYNTAX, "bad:/transitions/0/condition:1:8"),
+    ("ST", "VAR x : INT; END_VAR\nx := * 2;", "bad:2:6"),
 ])
 def test_diagnostics_render_program_pointer_and_position(language, source, location):
     e = compile_error(source, language)
     assert str(e) == f"{location}: {e.message}"
+
+
+def test_multiple_syntax_diagnostics_render_locations_individually_and_together():
+    e = compile_error("VAR x : INT; END_VAR\nx := * 2;\nx := * 3;")
+    expected = [f"bad:{line}:6: {d.message}" for line, d in zip((2, 3), e.errors)]
+    assert len(e.errors) == 2
+    assert [str(d) for d in e.errors] == expected
+    assert str(e) == "2 compile errors in bad:\n" + "\n".join("  " + s for s in expected)
 
 
 def test_malformed_json_text_is_a_compile_error():

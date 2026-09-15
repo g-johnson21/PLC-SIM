@@ -75,24 +75,78 @@ def test_chain_advances_while_normal_transitions_stay_blocked():
     assert (var(rt, "na", "seq"), out["DO1"], out["DO2"], out["DO3"]) == (5, False, False, False)
 
 
-@pytest.mark.parametrize("sidelined", ["disabled", "halted"])
+@pytest.mark.parametrize("sidelined", ["disabled", "halted", "both"])
 def test_abort_reaches_a_disabled_or_halted_chart(sidelined):
     rt = rig()
     feed(rt, DI1=True)
-    if sidelined == "disabled":
-        rt.set_program_enabled("seq", False)
-    else:
+    if sidelined in ("halted", "both"):
         assert [f.kind for f in feed(rt, AI1=1.0).faults] == ["div_zero"]
         assert rt.halted_programs() == ["seq"] and active(rt, "seq") == ["RUN1"]
         rt.write_inputs({"AI1": 0.0})
+    if sidelined in ("disabled", "both"):
+        rt.set_program_enabled("seq", False)
+    old_faults = rt.faults()
+    enabled = rt.program_enabled()
     rt.write_inputs({"DI2": True})
     rt.trigger_abort()
-    feed(rt)
+    result = feed(rt)
     assert active(rt, "seq") == ["ABORT"]
-    rt.set_program_enabled("seq", True)
-    rt.clear_faults()
+    out = rt.read_outputs()
+    assert (out["DO1"], out["DO2"], out["DO3"], out["DO4"]) == (False, False, True, False)
+    assert result.faults == [] and {"DO1", "DO2", "DO3"} <= result.outputs_written
+    assert var(rt, "na", "seq") == 1
+    assert rt.halted_programs() == [] and rt.faults() == old_faults
+    scan_n(rt, 5)
+    assert active(rt, "seq") == ["SAFE"] and rt.read_outputs()["DO3"] is False
+    assert var(rt, "na", "seq") == 5
+    rt.clear_abort()
+    assert rt.program_enabled() == enabled and rt.faults() == old_faults
+
+
+def test_disabled_chart_stops_executing_when_abort_is_cleared():
+    rt = rig()
+    rt.set_program_enabled("seq", False)
+    rt.trigger_abort()
     feed(rt)
-    assert active(rt, "seq") == ["ABORT"] and rt.read_outputs()["DO3"] is True
+    assert var(rt, "na", "seq") == 1
+    rt.clear_abort()
+    scan_n(rt, 8)
+    assert active(rt, "seq") == ["ABORT"] and var(rt, "na", "seq") == 1
+    assert rt.program_enabled()["seq"] is False
+
+
+@pytest.mark.parametrize("disabled", [False, True])
+def test_fault_in_abort_chain_halts_until_explicit_recovery(disabled):
+    rt = runtime(chart(sfc(
+        [step("IDLE", initial=True),
+         step("ABORT", action("DO1 := TRUE; q := 1 / z;", "P")), step("SAFE")],
+        [trans("ABORT", "SAFE")], vars=[decl("q", "INT"), decl("z", "INT")],
+        abort_step="ABORT")))
+    rt.set_program_enabled("chart", not disabled)
+    rt.trigger_abort()
+    [fault] = feed(rt).faults
+    assert fault.kind == "div_zero" and rt.halted_programs() == ["chart"]
+    assert active(rt) == ["ABORT"] and rt.read_outputs()["DO1"] is False
+    for _ in range(3):
+        assert feed(rt).faults == []
+        assert active(rt) == ["ABORT"] and rt.read_outputs()["DO1"] is False
+    rt.force("chart.z", 1)
+    rt.clear_faults()
+    assert feed(rt).faults == []
+    assert active(rt) == ["SAFE"] and rt.read_outputs()["DO1"] is True
+
+
+def test_abort_does_not_restart_halted_programs_without_an_abort_chain():
+    bad = st("VAR q : INT; z : INT; END_VAR q := 1 / z;", name="bad")
+    plain = chart(sfc([step("A", action("q := 1 / z;"), initial=True)], [],
+                      vars=[decl("q", "INT"), decl("z", "INT")], name="plain", autostart=True))
+    rt = runtime(bad, plain, seq_chart())
+    assert len(feed(rt).faults) == 2
+    old_faults = rt.faults()
+    rt.trigger_abort()
+    assert feed(rt).faults == []
+    assert rt.halted_programs() == ["bad", "plain"] and rt.faults() == old_faults
+    assert active(rt, "plain") == [] and rt.read_outputs()["DO3"] is True
 
 
 def test_start_sfc_raises_while_latched_and_starts_nothing():

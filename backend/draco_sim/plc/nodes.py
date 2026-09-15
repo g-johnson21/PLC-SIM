@@ -337,15 +337,15 @@ class For(Stmt):
         n = 0
         cap = self.cap
         while (i <= end) if step > 0 else (i >= end):
+            if n >= cap:
+                raise self.fault("loop", f"FOR loop exceeded {cap} iterations")
+            n += 1
             store[self.key] = conv(i) if conv is not None else i
             try:
                 for s in self.body:
                     s.exec(ctx)
             except ExitSignal:
                 return
-            n += 1
-            if n >= cap:
-                raise self.fault("loop", f"FOR loop exceeded {cap} iterations")
             i = store[self.key] + step
         store[self.key] = conv(i) if conv is not None else i
 
@@ -363,14 +363,14 @@ class While(Stmt):
         n = 0
         cap = self.cap
         while self.cond.eval(ctx):
+            if n >= cap:
+                raise self.fault("loop", f"WHILE loop exceeded {cap} iterations")
+            n += 1
             try:
                 for s in self.body:
                     s.exec(ctx)
             except ExitSignal:
                 return
-            n += 1
-            if n >= cap:
-                raise self.fault("loop", f"WHILE loop exceeded {cap} iterations")
 
 
 class Repeat(Stmt):
@@ -386,14 +386,14 @@ class Repeat(Stmt):
         n = 0
         cap = self.cap
         while True:
+            if n >= cap:
+                raise self.fault("loop", f"REPEAT loop exceeded {cap} iterations")
+            n += 1
             try:
                 for s in self.body:
                     s.exec(ctx)
             except ExitSignal:
                 return
-            n += 1
-            if n >= cap:
-                raise self.fault("loop", f"REPEAT loop exceeded {cap} iterations")
             if self.cond.eval(ctx):
                 return
 

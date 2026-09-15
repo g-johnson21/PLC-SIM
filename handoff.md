@@ -39,7 +39,8 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
   a source of P&ID, user, datasheet, physical-constant, PLACEHOLDER or calibrated. Test fixtures are slices
   of the real recordings.
 - **Keep the backend importable after every edit**, so a cutoff never leaves it broken.
-- **Environment:** there is no git repo. The backend listens on port 8765 by default. The `backend-server`
+- **Environment:** git repo on `main`, public at https://github.com/g-johnson21/PLC-SIM (created
+  2026-09-15). `testdata/` (raw DAQ CSVs) is gitignored and exists only locally. The backend listens on port 8765 by default. The `backend-server`
   entry in `.claude/launch.json` pins this machine's Python path. pytest 9.1.1 is installed.
 
 ---

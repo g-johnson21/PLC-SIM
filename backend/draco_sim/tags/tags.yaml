@@ -1,0 +1,918 @@
+# Draco test stand tag database. See docs/decisions.md (D1, D2, D3, D5) and
+# docs/data-survey.md for the sourcing of every field below. No channel
+# assignment here has been checked against real wiring — verified is false
+# everywhere in this build; see notes for the specific open items.
+
+tags:
+  # ---- LOX-side pressure transducers (NI-9208) ----------------------------
+  - tag: PT1
+    pid_tag: PT1
+    daq_column: "PT1 LOX GN2 (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 10000]
+    module: NI-9208
+    module_index: 0
+    channel: 1
+    normal_state: null
+    energize_polarity: null
+    description: GN2 manifold, LOX branch, upstream of S1
+    verified: false
+    notes: null
+
+  - tag: PT2
+    pid_tag: PT2
+    daq_column: "PT2 LOX Upstream (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 2
+    normal_state: null
+    energize_polarity: null
+    description: LOX branch between RV1 and C1
+    verified: false
+    notes: null
+
+  - tag: PT3
+    pid_tag: PT3
+    daq_column: "bb-ox board psi"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 3
+    normal_state: null
+    energize_polarity: null
+    description: >-
+      LOX bang-bang board pressure, downstream of C1 upstream of PB1;
+      LOX bang-bang feedback, actuates S1 (D2)
+    verified: false
+    notes: >-
+      Not its own CSV column — the DAQ only logs this as "bb-ox board psi"
+      (see docs/data-survey.md); there is no separate "PT3" header.
+
+  - tag: PT4
+    pid_tag: PT4
+    daq_column: "PT4 LOX Tank Downstream (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 4
+    normal_state: null
+    energize_polarity: null
+    description: LOX tank downstream / run line near B2
+    verified: false
+    notes: 'DAQ header says "Tank Downstream", not "run line" as in the brief.'
+
+  - tag: PT5
+    pid_tag: PT5
+    daq_column: "PT5 LOX Manifold (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 5
+    normal_state: null
+    energize_polarity: null
+    description: LOX engine feed manifold
+    verified: false
+    notes: null
+
+  # ---- Fuel-side pressure transducers (NI-9208) ---------------------------
+  - tag: PT11
+    pid_tag: PT11
+    daq_column: "PT11 Fuel GN2 (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 10000]
+    module: NI-9208
+    module_index: 0
+    channel: 6
+    normal_state: null
+    energize_polarity: null
+    description: GN2 manifold, fuel branch, upstream of S2
+    verified: false
+    notes: null
+
+  - tag: PT12
+    pid_tag: PT12
+    daq_column: "PT12 Fuel Upstream (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 7
+    normal_state: null
+    energize_polarity: null
+    description: Fuel branch downstream of S2/C3
+    verified: false
+    notes: null
+
+  - tag: PT13
+    pid_tag: PT13
+    daq_column: "bb-fuel board psi"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 8
+    normal_state: null
+    energize_polarity: null
+    description: >-
+      Fuel bang-bang board pressure, downstream of R1 takeoff upstream of
+      PB3; fuel bang-bang feedback, actuates S2 (D2)
+    verified: false
+    notes: >-
+      Not its own CSV column — the DAQ only logs this as "bb-fuel board psi"
+      (see docs/data-survey.md); there is no separate "PT13" header.
+
+  - tag: PT14
+    pid_tag: PT14
+    daq_column: "PT14 Fuel Tank Downstream (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 9
+    normal_state: null
+    energize_polarity: null
+    description: Fuel tank outlet upstream of B4
+    verified: false
+    notes: null
+
+  - tag: PT15
+    pid_tag: PT15
+    daq_column: "PT15 Fuel Engine Manifold (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 0
+    channel: 10
+    normal_state: null
+    energize_polarity: null
+    description: Fuel engine feed manifold
+    verified: false
+    notes: null
+
+  # ---- Venturi flow pairs, muscle/purge bus, chamber (NI-9208 index 1) ---
+  - tag: PT21
+    pid_tag: PT21
+    daq_column: "PT21 LOX Venturi Inlet (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 1
+    channel: 0
+    normal_state: null
+    energize_polarity: null
+    description: LOX run line upstream of venturi V1 (venturi inlet); flow pair with PT22
+    verified: false
+    notes: null
+
+  - tag: PT22
+    pid_tag: PT22
+    daq_column: "PT22 LOX Venturi Throat (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 1
+    channel: 1
+    normal_state: null
+    energize_polarity: null
+    description: LOX run line venturi V1 throat/downstream; flow pair with PT21
+    verified: false
+    notes: null
+
+  - tag: PT23
+    pid_tag: PT23
+    daq_column: "PT23 Fuel Venturi Inlet (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 1
+    channel: 2
+    normal_state: null
+    energize_polarity: null
+    description: Fuel venturi V2 inlet; flow pair with PT24
+    verified: false
+    notes: >-
+      The orchestrator brief had PT23/PT24 swapped (PT23 as throat, PT24 as
+      inlet). The DAQ header text is authoritative per D1; this entry follows
+      the DAQ header (PT23 = inlet).
+
+  - tag: PT24
+    pid_tag: PT24
+    daq_column: "PT24 Fuel Venturi Throat (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 1
+    channel: 3
+    normal_state: null
+    energize_polarity: null
+    description: Fuel venturi V2 throat/downstream; flow pair with PT23
+    verified: false
+    notes: >-
+      The orchestrator brief had PT23/PT24 swapped. The DAQ header text is
+      authoritative per D1; this entry follows the DAQ header (PT24 = throat).
+
+  - tag: PT31
+    pid_tag: PT31
+    daq_column: "PT31 Muscle Bus (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 500]
+    module: NI-9208
+    module_index: 1
+    channel: 4
+    normal_state: null
+    energize_polarity: null
+    description: >-
+      Actuation-air ("muscle bus") supply at PB3; instrument air, not
+      process fluid
+    verified: false
+    notes: null
+
+  - tag: PT32
+    pid_tag: PT32
+    daq_column: "PT32 Purge Bus (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 500]
+    module: NI-9208
+    module_index: 1
+    channel: 5
+    normal_state: null
+    energize_polarity: null
+    description: Purge branch downstream of R1/RV5; regulated to roughly 250 psi
+    verified: false
+    notes: null
+
+  - tag: PT33
+    pid_tag: PT33
+    daq_column: null
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: [0, 1500]
+    module: NI-9208
+    module_index: 1
+    channel: 6
+    normal_state: null
+    energize_polarity: null
+    description: Engine feed manifold near thrust mount
+    verified: false
+    notes: On the P&ID but not logged by the DAQ in any of the surveyed CSVs.
+
+  - tag: PT0
+    pid_tag: null
+    daq_column: "PT0 Chamber (psi)"
+    aliases: []
+    kind: analog_in
+    signal: pressure
+    units: psi
+    range: null
+    module: NI-9208
+    module_index: 1
+    channel: 7
+    normal_state: null
+    energize_polarity: null
+    description: Combustion chamber pressure
+    verified: false
+    notes: >-
+      Not on the P&ID; no full-scale range is given anywhere in the source
+      material, so range is left null rather than guessed — treat as an
+      open item for whoever specs the real transducer. Module/channel here
+      is a placeholder guess (put on NI-9208 like the other PTs purely for
+      simplicity); the real card for this signal is unknown. Per the data
+      survey this channel also appears to freeze at 108.501 psi from about
+      T+1.6 s into the hotfire run and stays frozen afterward — likely a
+      sensor/DAQ fault, not a simulator concern for task 1.
+
+  # ---- Thermocouples (NI-9211), K-type per house brief, no range given ---
+  - tag: TC1
+    pid_tag: TC1
+    daq_column: "TC1 LOX Tank Bottom (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 0
+    channel: 0
+    normal_state: null
+    energize_polarity: null
+    description: LOX tank bottom
+    verified: false
+    notes: >-
+      Brief said "upper tank"; the DAQ header says "LOX Tank Bottom". DAQ
+      wins per D1.
+
+  - tag: TC2
+    pid_tag: TC2
+    daq_column: "TC2 LOX Tank Top (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 0
+    channel: 1
+    normal_state: null
+    energize_polarity: null
+    description: LOX tank top
+    verified: false
+    notes: TC1/TC2 top-bottom labeling is reversed from the brief; DAQ header wins.
+
+  - tag: TC3
+    pid_tag: TC3
+    daq_column: "TC3 Dragon (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 0
+    channel: 2
+    normal_state: null
+    energize_polarity: null
+    description: LOX run line, venturi inlet side (per P&ID location)
+    verified: false
+    notes: >-
+      DAQ column header calls this channel "Dragon", not a location name.
+      Keeping the DAQ header text verbatim in daq_column; the description
+      above is the P&ID-side location and the two do not obviously match —
+      flagged for the human reviewer, not resolved here.
+
+  - tag: TC4
+    pid_tag: TC4
+    daq_column: "TC4 Venturi (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 0
+    channel: 3
+    normal_state: null
+    energize_polarity: null
+    description: LOX run line, venturi outlet side (per P&ID location)
+    verified: false
+    notes: DAQ header just says "Venturi"; assumed outlet side per P&ID, unconfirmed.
+
+  - tag: TC5
+    pid_tag: TC5
+    daq_column: "TC5 Spare 5 (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 1
+    channel: 0
+    normal_state: null
+    energize_polarity: null
+    description: Engine feed manifold, LOX side (per P&ID location)
+    verified: false
+    notes: >-
+      DAQ header calls this "Spare 5", suggesting it may not actually be
+      wired where the P&ID says. Flagged, not resolved.
+
+  - tag: TC6
+    pid_tag: null
+    daq_column: "TC6 Fuel BB Solenoid (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 1
+    channel: 1
+    normal_state: null
+    energize_polarity: null
+    description: Fuel bang-bang solenoid body temperature
+    verified: false
+    notes: Not on the P&ID.
+
+  - tag: TC7
+    pid_tag: null
+    daq_column: "TC7 LOX BB Solenoid (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 1
+    channel: 2
+    normal_state: null
+    energize_polarity: null
+    description: LOX bang-bang solenoid body temperature
+    verified: false
+    notes: Not on the P&ID.
+
+  - tag: TC8
+    pid_tag: null
+    daq_column: "TC8 Chamber (degF)"
+    aliases: []
+    kind: analog_in
+    signal: temperature
+    units: degF
+    range: null
+    module: NI-9211
+    module_index: 1
+    channel: 3
+    normal_state: null
+    energize_polarity: null
+    description: Chamber
+    verified: false
+    notes: Not on the P&ID.
+
+  # ---- Load cells (NI-9237 bridge inputs) ---------------------------------
+  - tag: LC1
+    pid_tag: LC-R
+    daq_column: "LC1 TLCA (lbf)"
+    aliases: []
+    kind: analog_in
+    signal: load_cell
+    units: lbf
+    range: [0, 3000]
+    module: NI-9237
+    module_index: 0
+    channel: 0
+    normal_state: null
+    energize_polarity: null
+    description: Thrust cell A
+    verified: false
+    notes: null
+    capacity_lbf: 3000
+    rated_output_mv_per_v: 2
+
+  - tag: LC2
+    pid_tag: LC-G
+    daq_column: "LC2 TLCB (lbf)"
+    aliases: []
+    kind: analog_in
+    signal: load_cell
+    units: lbf
+    range: [0, 3000]
+    module: NI-9237
+    module_index: 0
+    channel: 1
+    normal_state: null
+    energize_polarity: null
+    description: Thrust cell B
+    verified: false
+    notes: null
+    capacity_lbf: 3000
+    rated_output_mv_per_v: 2
+
+  - tag: LC3
+    pid_tag: LC-B
+    daq_column: "LC3 TLCC (lbf)"
+    aliases: []
+    kind: analog_in
+    signal: load_cell
+    units: lbf
+    range: [0, 3000]
+    module: NI-9237
+    module_index: 0
+    channel: 2
+    normal_state: null
+    energize_polarity: null
+    description: Thrust cell C
+    verified: false
+    notes: null
+    capacity_lbf: 3000
+    rated_output_mv_per_v: 2
+
+  - tag: LC4
+    pid_tag: LC1
+    daq_column: "LC4 LOX Tank Weight (lbf)"
+    aliases: []
+    kind: analog_in
+    signal: load_cell
+    units: lbf
+    range: [0, 200]
+    module: NI-9237
+    module_index: 0
+    channel: 3
+    normal_state: null
+    energize_polarity: null
+    description: LOX tank weight
+    verified: false
+    notes: >-
+      P&ID calls this LC1 (stored in pid_tag, never used as a lookup alias
+      per D1 — it would collide with the canonical tag "LC1", thrust cell
+      A). Reads a constant 2748.524 lbf in six of the eight surveyed files;
+      likely disconnected or stuck, per docs/data-survey.md. Separately, in
+      the failed-hotfire recording (Draco_20260911_124919) this channel
+      turns erratic for about 2 s starting at 109.064 s — shortly after,
+      but distinct from, the RUD that invalidates PT0/LC1-3/THRUST at
+      108.972 s — and recovers by 111.194 s; see
+      backend/draco_sim/data/annotations.yaml and RunData.invalid_from /
+      RunData.invalid_to for that recording.
+    capacity_lbf: 200
+    rated_output_mv_per_v: 2
+
+  - tag: LC_FUEL
+    pid_tag: LC2
+    daq_column: null
+    aliases: []
+    kind: analog_in
+    signal: load_cell
+    units: lbf
+    range: [0, 200]
+    module: NI-9237
+    module_index: 1
+    channel: 0
+    normal_state: null
+    energize_polarity: null
+    description: Fuel tank weight
+    verified: false
+    notes: >-
+      Not present in any of the 2026-09-11 logs. P&ID calls this LC2
+      (pid_tag), never used as a lookup alias per D1. Channel assignment is
+      a placeholder; whether this cell is even installed is an open item.
+    capacity_lbf: 200
+    rated_output_mv_per_v: 2
+
+  - tag: THRUST
+    pid_tag: null
+    daq_column: "Thrust Combined (lbf)"
+    aliases: []
+    kind: derived
+    signal: derived
+    units: lbf
+    range: [0, 9000]
+    module: null
+    module_index: null
+    channel: null
+    normal_state: null
+    energize_polarity: null
+    description: Derived total thrust = LC1 + LC2 + LC3
+    verified: false
+    notes: >-
+      Range is 3x the 3000 lbf single-cell capacity, not an independently
+      specified rating. Also present pre-computed as its own DAQ column
+      ("Thrust Combined (lbf)"); the loader takes it directly from that
+      column rather than re-summing, but the derivation is LC1+LC2+LC3.
+
+  # ---- Digital outputs / valves (NI-9476), mapping per D3 -----------------
+  - tag: S1
+    pid_tag: S1
+    daq_column: "DC1 LOx Tank BB (state)"
+    aliases: [SV-LOXBB, DC1]
+    kind: digital_out
+    signal: solenoid
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 0
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: LOX bang-bang pressurization solenoid
+    verified: false
+    notes: >-
+      D12 (2026-09-13): this loop ran on the previous system's own bang-bang
+      controller board, not the GC — daq_column (DC1) is only the GC's
+      manual command and does not track the true valve state (96.0% percent
+      agreement with the board's own telemetry in the 124919 hotfire, worse
+      elsewhere). D13 (2026-09-13): both the board and DC1 wire to the same
+      solenoid, either can open it (in the 125242 safing run the GC alone
+      opened S1, 302.82-330.53s, board silent) — RunData.valves["S1"] is the
+      OR of the board's BBD telemetry (RunData.bbd["ox"].press_cmd) and the
+      raw DC1 command; DC1 is kept separately as RunData.gc_commands["S1"].
+    dc_index: 1
+    solenoid_command_index: 1
+
+  - tag: S2
+    pid_tag: S2
+    daq_column: "DC2 Fuel Tank BB (state)"
+    aliases: [SV-FBB, DC2]
+    kind: digital_out
+    signal: solenoid
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 1
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: Fuel bang-bang pressurization solenoid
+    verified: false
+    notes: >-
+      D12 (2026-09-13): this loop ran on the previous system's own bang-bang
+      controller board, not the GC — daq_column (DC2) is only the GC's
+      manual command. D13 (2026-09-13): both the board and DC2 wire to the
+      same solenoid, either can open it (in the 125242 safing run the GC
+      alone opened S2, 317.08-337.82s, board silent) — RunData.valves["S2"]
+      is the OR of the board's BBD telemetry (RunData.bbd["fuel"].press_cmd)
+      and the raw DC2 command; DC2 is kept separately as
+      RunData.gc_commands["S2"].
+    dc_index: 2
+    solenoid_command_index: 2
+
+  - tag: PB1
+    pid_tag: PB1
+    daq_column: "DC3 LOx GN2 Vent (state)"
+    aliases: [SV-LOXV, DC3]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 2
+    normal_state: "NO"
+    energize_polarity: open_when_deenergized
+    description: LOX tank GN2 vent
+    verified: false
+    notes: null
+    dc_index: 3
+    solenoid_command_index: 3
+
+  - tag: PB3
+    pid_tag: PB3
+    daq_column: "DC4 Fuel GN2 Vent (state)"
+    aliases: [SV-FV, DC4]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 3
+    normal_state: "NO"
+    energize_polarity: open_when_deenergized
+    description: Fuel tank GN2 vent
+    verified: false
+    notes: null
+    dc_index: 4
+    solenoid_command_index: 4
+
+  - tag: PB2
+    pid_tag: PB2
+    daq_column: "DC5 Ox Runline (state)"
+    aliases: [MV-LOX, DC5]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 4
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: LOX main run valve
+    verified: false
+    notes: null
+    dc_index: 5
+    solenoid_command_index: 5
+
+  - tag: PB4
+    pid_tag: PB4
+    daq_column: "DC6 Fuel Runline (state)"
+    aliases: [MV-F, DC6]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 5
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: Fuel main run valve
+    verified: false
+    notes: null
+    dc_index: 6
+    solenoid_command_index: 6
+
+  - tag: S5
+    pid_tag: S5
+    daq_column: "DC7 Fuel Purge (state)"
+    aliases: [SV-FPURGE, DC7]
+    kind: digital_out
+    signal: solenoid
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 6
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: Fuel line purge injection
+    verified: false
+    notes: null
+    dc_index: 7
+    solenoid_command_index: 7
+
+  - tag: S4
+    pid_tag: S4
+    daq_column: "DC8 LOX Purge (state)"
+    aliases: [SV-LOXPURGE, DC8]
+    kind: digital_out
+    signal: solenoid
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 7
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: LOX line purge injection
+    verified: false
+    notes: null
+    dc_index: 8
+    solenoid_command_index: 8
+
+  - tag: PB5
+    pid_tag: PB5
+    daq_column: "DC9 LOX Fill (state)"
+    aliases: [SV-LOX-FILL, DC9]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 8
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: LOX fill valve
+    verified: false
+    notes: >-
+      Confirmed D8/D12 (2026-09-13): PB5 sits on the dewar fill line (B1 ->
+      PB5 -> C5), not the LOX tank outlet — the recorded hotfire flowed LOX
+      with PB5 closed throughout. The LOX tank outlet is unvalved in the
+      model. Supersedes D3's original "LOX fill / tank outlet isolation"
+      wording.
+    dc_index: 9
+    solenoid_command_index: 9
+
+  - tag: S3
+    pid_tag: S3
+    daq_column: "DC10 Muscle Bus Vent (state)"
+    aliases: [SV-MBV, DC10]
+    kind: digital_out
+    signal: solenoid
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 9
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: Muscle-bus (actuation air) vent
+    verified: false
+    notes: null
+    dc_index: 10
+    solenoid_command_index: 10
+
+  - tag: PB6
+    pid_tag: PB6
+    daq_column: "DC11 GOX Purge (state)"
+    aliases: [SV-GOX-PURGE, DC11]
+    kind: digital_out
+    signal: pneumatic_ball
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 10
+    normal_state: "NC"
+    energize_polarity: open_when_energized
+    description: LOX run-line GOX vent/purge
+    verified: false
+    notes: null
+    dc_index: 11
+    solenoid_command_index: 11
+
+  # ---- Reserved spare digital outputs -------------------------------------
+  - tag: SPARE_IGNITER
+    pid_tag: null
+    daq_column: null
+    aliases: []
+    kind: digital_out
+    signal: null
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 11
+    normal_state: null
+    energize_polarity: null
+    description: Reserved spare output, tentatively earmarked for an igniter circuit
+    verified: false
+    notes: No field device defined yet; channel is reserved, not wired.
+    reserved: true
+
+  - tag: SPARE_CAMERA_TRIGGER
+    pid_tag: null
+    daq_column: null
+    aliases: []
+    kind: digital_out
+    signal: null
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 12
+    normal_state: null
+    energize_polarity: null
+    description: Reserved spare output, tentatively earmarked for a camera trigger
+    verified: false
+    notes: No field device defined yet; channel is reserved, not wired.
+    reserved: true
+
+  - tag: SPARE_COMPRESSOR
+    pid_tag: null
+    daq_column: null
+    aliases: []
+    kind: digital_out
+    signal: null
+    units: bool
+    range: null
+    module: NI-9476
+    module_index: 0
+    channel: 13
+    normal_state: null
+    energize_polarity: null
+    description: Reserved spare output, tentatively earmarked for a compressor start/stop
+    verified: false
+    notes: No field device defined yet; channel is reserved, not wired.
+    reserved: true
+
+# Non-tag DAQ columns: bang-bang board internals and run bookkeeping. Not PLC
+# tags, but the CSV loader needs one place that knows their exact headers.
+daq_meta_columns:
+  - bb-fuel setpoint
+  - bb-fuel enabled
+  - bb-fuel board state
+  - bb-fuel board press
+  - bb-fuel board vent
+  - bb-ox setpoint
+  - bb-ox enabled
+  - bb-ox board state
+  - bb-ox board press
+  - bb-ox board vent
+  - armed
+  - sequence
+  - event
+  - timestamp
+  - elapsed_s

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "language": "SFC",
+  "name": "gn2_purge",
+  "description": "PLACEHOLDER GN2 purge, transcribed from the recorded seq-custom-13 of 2026-09-11: both line purges open for 2 s, then closed.",
+  "autostart": false,
+  "steps": [
+    {
+      "name": "START",
+      "id": "s.start",
+      "initial": true,
+      "actions": []
+    },
+    {
+      "name": "PURGE",
+      "id": "s.purge",
+      "comment": "Both line purge solenoids held open for the duration of the step",
+      "actions": [
+        {"id": "a.purge", "qualifier": "N", "body": "S5 := TRUE;\nS4 := TRUE;", "comment": "SV-FPURGE + SV-LOXPURGE open"}
+      ]
+    },
+    {
+      "name": "DONE",
+      "id": "s.done",
+      "comment": "Pulsed on entry rather than held, so this step cannot fight an abort chain that reopens the purges later in the same scan.",
+      "actions": [
+        {"id": "a.done", "qualifier": "P", "body": "S5 := FALSE;\nS4 := FALSE;"}
+      ]
+    }
+  ],
+  "transitions": [
+    {"id": "t.start", "from": "START", "to": "PURGE", "condition": "TRUE"},
+    {"id": "t.purge", "from": "PURGE", "to": "DONE", "condition": "PURGE.T >= T#2s"}
+  ]
+}

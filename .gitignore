@@ -1,0 +1,25 @@
+# Raw DAQ recordings (149 MB); tests use the slices in backend/tests/fixtures
+testdata/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+build/
+
+# Node / frontend
+node_modules/
+dist/
+*.log
+
+# Local environment and editor
+.env
+.env.*
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "language": "SFC",
+  "name": "hotfire",
+  "description": "Hotfire procedure supplied by the stand team (decisions.md D12, 2026-09-13): T+0.00 PB2 open, T+0.50 PB4 open, T+8.00 PB2 close, T+8.50 PB4 close, T+8.70 S4 and S5 open, T+11.70 S4 and S5 close. Every timed transition compares SYS_TIME - t_start with the stated T+, so each command lands on the first scan that starts at or after its T+ at any scan rate, instead of adding up a scan of delay per step. t_start is taken 0.000001 s early: without that margin, floating-point rounding of the subtraction fired about one command in five a scan late whenever a T+ fell on a scan boundary. The abort chain (ABORT to ABORT_DONE) is the stand's recorded abort sequence from Draco_20260911_124919.",
+  "autostart": false,
+  "abort_step": "ABORT",
+  "vars": [
+    {"name": "t_start", "type": "REAL", "scope": "VAR", "comment": "SYS_TIME at T+0.00 less 0.000001 s, seconds"}
+  ],
+  "steps": [
+    {
+      "name": "START",
+      "id": "s.start",
+      "initial": true,
+      "comment": "Records T+0. A step of its own because transitions are evaluated before actions: a timed transition out of this step would read the previous run's t_start on the first scan.",
+      "actions": [
+        {"id": "a.start.t0", "qualifier": "P", "body": "t_start := SYS_TIME - 0.000001;", "comment": "the margin absorbs rounding in SYS_TIME - t_start and is far below any scan period"}
+      ]
+    },
+    {
+      "name": "OPEN_LOX_MAIN",
+      "id": "s.open_lox_main",
+      "comment": "T+0.00",
+      "actions": [
+        {"id": "a.pb2.open", "qualifier": "S", "name": "PB2", "body": "PB2 := TRUE;", "comment": "MV-LOX open"}
+      ]
+    },
+    {
+      "name": "OPEN_FUEL_MAIN",
+      "id": "s.open_fuel_main",
+      "comment": "T+0.50",
+      "actions": [
+        {"id": "a.pb4.open", "qualifier": "S", "name": "PB4", "body": "PB4 := TRUE;", "comment": "MV-F open"}
+      ]
+    },
+    {
+      "name": "CLOSE_LOX_MAIN",
+      "id": "s.close_lox_main",
+      "comment": "T+8.00",
+      "actions": [
+        {"id": "a.pb2.close", "qualifier": "R", "name": "PB2", "body": "PB2 := FALSE;", "comment": "MV-LOX closed"}
+      ]
+    },
+    {
+      "name": "CLOSE_FUEL_MAIN",
+      "id": "s.close_fuel_main",
+      "comment": "T+8.50",
+      "actions": [
+        {"id": "a.pb4.close", "qualifier": "R", "name": "PB4", "body": "PB4 := FALSE;", "comment": "MV-F closed"}
+      ]
+    },
+    {
+      "name": "OPEN_PURGES",
+      "id": "s.open_purges",
+      "comment": "T+8.70",
+      "actions": [
+        {"id": "a.s4.open", "qualifier": "S", "name": "S4", "body": "S4 := TRUE;", "comment": "SV-LOXPURGE open"},
+        {"id": "a.s5.open", "qualifier": "S", "name": "S5", "body": "S5 := TRUE;", "comment": "SV-FPURGE open"}
+      ]
+    },
+    {
+      "name": "CLOSE_PURGES",
+      "id": "s.close_purges",
+      "comment": "T+11.70",
+      "actions": [
+        {"id": "a.s4.close", "qualifier": "R", "name": "S4", "body": "S4 := FALSE;", "comment": "SV-LOXPURGE closed"},
+        {"id": "a.s5.close", "qualifier": "R", "name": "S5", "body": "S5 := FALSE;", "comment": "SV-FPURGE closed"}
+      ]
+    },
+    {
+      "name": "COMPLETE",
+      "id": "s.complete",
+      "comment": "Final step of the procedure; stays active until the sequence is started again",
+      "actions": []
+    },
+    {
+      "name": "ABORT",
+      "id": "s.abort",
+      "comment": "Head of the stand's recorded abort sequence. Entered by runtime.trigger_abort() from any step.",
+      "actions": [
+        {"id": "a.ab1.pb2", "qualifier": "R", "name": "PB2", "body": "PB2 := FALSE;", "comment": "MV-LOX closed"}
+      ]
+    },
+    {
+      "name": "ABORT_2",
+      "id": "s.abort2",
+      "actions": [
+        {"id": "a.ab2.pb4", "qualifier": "R", "name": "PB4", "body": "PB4 := FALSE;", "comment": "MV-F closed"}
+      ]
+    },
+    {
+      "name": "ABORT_3",
+      "id": "s.abort3",
+      "comment": "Stop both bang-bang loops",
+      "actions": [
+        {"id": "a.ab3.s1", "qualifier": "R", "name": "S1", "body": "S1 := FALSE;"},
+        {"id": "a.ab3.s2", "qualifier": "R", "name": "S2", "body": "S2 := FALSE;"}
+      ]
+    },
+    {
+      "name": "ABORT_4",
+      "id": "s.abort4",
+      "comment": "Vent both tanks and purge both lines for 5 s",
+      "actions": [
+        {"id": "a.ab4.pb1", "qualifier": "S", "name": "PB1", "body": "PB1 := TRUE;", "comment": "LOX GN2 vent open"},
+        {"id": "a.ab4.pb3", "qualifier": "S", "name": "PB3", "body": "PB3 := TRUE;", "comment": "fuel GN2 vent open"},
+        {"id": "a.ab4.s5", "qualifier": "S", "name": "S5", "body": "S5 := TRUE;", "comment": "fuel purge open"},
+        {"id": "a.ab4.s4", "qualifier": "S", "name": "S4", "body": "S4 := TRUE;", "comment": "LOX purge open"}
+      ]
+    },
+    {
+      "name": "ABORT_5",
+      "id": "s.abort5",
+      "comment": "Purges closed; the tank vents stay open",
+      "actions": [
+        {"id": "a.ab5.s5", "qualifier": "R", "name": "S5", "body": "S5 := FALSE;"},
+        {"id": "a.ab5.s4", "qualifier": "R", "name": "S4", "body": "S4 := FALSE;"}
+      ]
+    },
+    {
+      "name": "ABORT_DONE",
+      "id": "s.abortdone",
+      "comment": "End of the recorded abort sequence - stand is venting. Final step, stays active.",
+      "actions": []
+    }
+  ],
+  "transitions": [
+    {"id": "t.start", "from": "START", "to": "OPEN_LOX_MAIN", "condition": "TRUE", "comment": "T+0.00, the sequence's first scan"},
+    {"id": "t.open_fuel_main", "from": "OPEN_LOX_MAIN", "to": "OPEN_FUEL_MAIN", "condition": "SYS_TIME - t_start >= 0.5"},
+    {"id": "t.close_lox_main", "from": "OPEN_FUEL_MAIN", "to": "CLOSE_LOX_MAIN", "condition": "SYS_TIME - t_start >= 8.0"},
+    {"id": "t.close_fuel_main", "from": "CLOSE_LOX_MAIN", "to": "CLOSE_FUEL_MAIN", "condition": "SYS_TIME - t_start >= 8.5"},
+    {"id": "t.open_purges", "from": "CLOSE_FUEL_MAIN", "to": "OPEN_PURGES", "condition": "SYS_TIME - t_start >= 8.7"},
+    {"id": "t.close_purges", "from": "OPEN_PURGES", "to": "CLOSE_PURGES", "condition": "SYS_TIME - t_start >= 11.7"},
+    {"id": "t.complete", "from": "CLOSE_PURGES", "to": "COMPLETE", "condition": "TRUE"},
+    {"id": "t.ab1", "from": "ABORT", "to": "ABORT_2", "condition": "ABORT.T >= T#100ms"},
+    {"id": "t.ab2", "from": "ABORT_2", "to": "ABORT_3", "condition": "ABORT_2.T >= T#100ms"},
+    {"id": "t.ab3", "from": "ABORT_3", "to": "ABORT_4", "condition": "ABORT_3.T >= T#100ms"},
+    {"id": "t.ab4", "from": "ABORT_4", "to": "ABORT_5", "condition": "ABORT_4.T >= T#5s"},
+    {"id": "t.ab5", "from": "ABORT_5", "to": "ABORT_DONE", "condition": "TRUE"}
+  ]
+}

@@ -1,0 +1,42 @@
+# Written by `python -m draco_sim.plant.calibrate` from the 2026-09-11 recordings.
+# Rerun the script instead of editing by hand. PlantConfig.calibrated() loads this
+# file over the defaults; `replay --uncalibrated` ignores it.
+pb_dead_time:
+  value: 0.23
+  units: s
+  source: calibrated
+  notes: median PB open lag 0.366 s over 7 isolated opens of PB1, PB2, PB5, PB6 (12:36, 12:49) minus median
+    solenoid lag 0.138 s over 17 S1/S2 opens, taken as command-logging latency. Lag = midpoint between
+    the last transducer update within 8 psi of the pre-command level and the first outside it (updates
+    are ~0.1 s apart). PB2 and PB4 lag 0.390 and 0.392 s to their venturi, so the fuel run line adds no
+    resolvable fill time.
+cda_pb1:
+  value: 2.7e-05
+  units: m^2
+  source: calibrated
+  notes: 'golden-section least squares on log absolute PT4 over the vent blowdowns 12:36 486.00-487.6
+    s (516->228 psi, LC4 71 lbm, RMS 72.5 psi, alone 3.53e-05); 12:49 109.82-115.0 s (683->276 psi, LC4
+    41 lbm, RMS 30.4 psi, alone 2.40e-05). Stops above ~250 psi; below that the LOX flashes and holds
+    the tank up. Valid at lox_ullage_temp: the fit identifies cda * sqrt(T).'
+cda_pb3:
+  value: 4.57e-05
+  units: m^2
+  source: calibrated
+  notes: golden-section least squares on log absolute PT14, 12:49 109.82-113.5 s (651->73 psi), RMS 39.7
+    psi. Fuel load 39 lbm from the 12:36 S2 mass balance; the fit scales with the fuel ullage volume,
+    which no load cell measures.
+cda_s1:
+  value: 8.04e-06
+  units: m^2
+  source: calibrated
+  notes: median over 13 isolated S1 pulses (12:49 median 7.56e-06, 12:36 median 8.95e-06; range 7.04e-06-1.20e-05)
+    of the area whose modelled PT4 rise rate, 0.1-0.35 s after opening, matches the logged rise rate (median
+    interior step between transducer updates). Fitted on rate, not on the telemetry pulse width, per D13.
+cda_s2:
+  value: 7.83e-06
+  units: m^2
+  source: calibrated
+  notes: median over 7 isolated S2 pulses (12:36 median 7.83e-06; range 5.57e-06-1.41e-05) of the area
+    whose modelled PT14 rise rate, 0.1-0.35 s after opening, matches the logged rise rate (median interior
+    step between transducer updates). Fitted on rate, not on the telemetry pulse width, per D13. Fuel
+    load 39 lbm from the 12:36 S2 mass balance.

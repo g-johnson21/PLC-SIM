@@ -1,0 +1,54 @@
+# Hand-maintained per-recording annotations (testdata/*.csv stays read-only).
+# Extendable: add another key under `recordings` (by exact CSV filename) with
+# its own `note` and `invalid` list to flag more known-bad channel windows.
+#
+# Format per `invalid` entry:
+#   tag:     canonical tag name (backend/draco_sim/tags/tags.yaml)
+#   from_s:  elapsed_s the channel becomes invalid (inclusive)
+#   to_s:    elapsed_s it recovers (exclusive), or null if it never recovers
+#            within this recording
+#   reason:  short, specific reason
+recordings:
+  Draco_20260911_124919_hotfire.csv:
+    note: >-
+      Failed hotfire (D12, stand team, 2026-09-13): the engine suffered a RUD
+      around T+109 s and the abort that followed was manual. The thrust load
+      cells and chamber PT failed at that moment; pressure transducers other
+      than PT0 are not in question. The 128 lbf thrust peak just before the
+      RUD is a start transient, not steady-state thrust.
+    invalid:
+      - tag: PT0
+        from_s: 108.972
+        to_s: null
+        reason: >-
+          Freezes at 108.501 psi at this sample and stays there through the
+          end of the recording (verified: last unique value at idx 4074,
+          constant for the remaining ~3500 rows).
+      - tag: LC1
+        from_s: 108.972
+        to_s: null
+        reason: Thrust cell A reads garbage from the RUD onward (same instant as the PT0 freeze, per the stand team).
+      - tag: LC2
+        from_s: 108.972
+        to_s: null
+        reason: Thrust cell B reads garbage from the RUD onward.
+      - tag: LC3
+        from_s: 108.972
+        to_s: null
+        reason: Thrust cell C reads garbage from the RUD onward.
+      - tag: THRUST
+        from_s: 108.972
+        to_s: null
+        reason: Derived from LC1+LC2+LC3; invalid whenever any of its inputs are.
+      - tag: LC4
+        from_s: 109.064
+        to_s: 111.194
+        reason: >-
+          LOX tank weight turns erratic shortly after the RUD (first >6-sigma
+          jump vs. its pre-event baseline at 109.064 s: 49.3 -> 101.5 lbf,
+          then swings through -5.5, 49.5, 53.0 lbf before settling) and
+          recovers to baseline-level smoothness by 111.194 s (1 s rolling
+          std back under 3 lbf and stays there through the end of the file,
+          vs. a pre-event baseline rolling std of ~0.3 lbf). This is a
+          separate, shorter-lived fault from the PT0/thrust-cell failure —
+          exposed as its own window rather than folded into the RUD one.

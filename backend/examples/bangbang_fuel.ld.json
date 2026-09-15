@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "language": "LD",
+  "name": "bangbang_fuel",
+  "description": "Fuel tank bang-bang pressurisation in ladder form: PT13 -> S2. Same hysteresis as bangbang_lox; setpoint and deadband are operator-set at runtime (initial values recorded from the stand's last pre-fire configuration, 2026-09-11).",
+  "vars": [
+    {"name": "setpoint_fuel", "type": "REAL", "scope": "VAR_GLOBAL", "init": 870.0, "comment": "psi, operator-set"},
+    {"name": "deadband_fuel", "type": "REAL", "scope": "VAR_GLOBAL", "init": 15.0, "comment": "psi, operator-set"},
+    {"name": "bb_fuel_enable", "type": "BOOL", "scope": "VAR_GLOBAL", "init": false},
+    {"name": "lo", "type": "REAL", "scope": "VAR", "comment": "setpoint - deadband"},
+    {"name": "hi", "type": "REAL", "scope": "VAR", "comment": "setpoint + deadband"}
+  ],
+  "rungs": [
+    {
+      "id": "r1",
+      "comment": "Recompute the hysteresis band every scan so operator edits take effect",
+      "logic": {
+        "type": "series",
+        "elements": [
+          {"id": "r1.sub", "type": "math", "op": "SUB", "a": "setpoint_fuel", "b": "deadband_fuel", "dst": "lo"},
+          {"id": "r1.add", "type": "math", "op": "ADD", "a": "setpoint_fuel", "b": "deadband_fuel", "dst": "hi"}
+        ]
+      }
+    },
+    {
+      "id": "r2",
+      "comment": "Below the band: open the fuel press solenoid",
+      "logic": {
+        "type": "series",
+        "elements": [
+          {"id": "r2.en", "type": "contact", "kind": "NO", "operand": "bb_fuel_enable", "comment": "loop enable"},
+          {"id": "r2.lt", "type": "compare", "op": "LT", "a": "PT13", "b": "lo"},
+          {"id": "r2.set", "type": "coil", "kind": "SET", "operand": "S2"}
+        ]
+      }
+    },
+    {
+      "id": "r3",
+      "comment": "Above the band, or loop disabled: close it",
+      "logic": {
+        "type": "series",
+        "elements": [
+          {
+            "id": "r3.par",
+            "type": "parallel",
+            "branches": [
+              {
+                "type": "series",
+                "elements": [
+                  {"id": "r3.en", "type": "contact", "kind": "NO", "operand": "bb_fuel_enable"},
+                  {"id": "r3.gt", "type": "compare", "op": "GT", "a": "PT13", "b": "hi"}
+                ]
+              },
+              {"id": "r3.dis", "type": "contact", "kind": "NC", "operand": "bb_fuel_enable", "comment": "disabled -> force closed"}
+            ]
+          },
+          {"id": "r3.rst", "type": "coil", "kind": "RESET", "operand": "S2"}
+        ]
+      }
+    }
+  ]
+}

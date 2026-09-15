@@ -1,0 +1,63 @@
+# NI module hardware specs only — no simulator/wiring assignment here (that
+# lives on each tag in tags.yaml as module/module_index/channel). Every field
+# below is taken verbatim from the module table supplied for this task; where
+# the table did not give a figure (e.g. NI-9237 resolution) it is left null
+# rather than guessed.
+
+modules:
+  - type: NI-9208
+    count: 2
+    channels: 16
+    resolution_bits: 24
+    input_range: "±21.5 mA"
+    rate: "500 S/s (high-speed mode) or 52 ms/ch (high-resolution mode)"
+    notes: >-
+      Current-input module; carries all pressure transducers (PT tags).
+      Assignment of PT0..PT5 and PT11..PT15 to index 0, and PT21..PT33 to
+      index 1, is a simulator convention picked for this build, not a
+      confirmed wiring layout — see verified: false on each PT tag.
+
+  - type: NI-9211
+    count: 2
+    channels: 4
+    resolution_bits: 24
+    input_range: "±80 mV"
+    rate: "14 S/s"
+    notes: >-
+      Thermocouple module; carries TC1-TC8. 8 channels logged exactly fills
+      two of these cards (TC1-4 on index 0, TC5-8 on index 1). Thermocouple
+      type (K assumed) is not stated in the module spec and is not recorded
+      here as a module fact.
+
+  - type: NI-9237
+    count: 2
+    channels: 4
+    resolution_bits: null
+    input_range: "±25 mV/V"
+    rate: "50 kS/s/ch simultaneous"
+    notes: >-
+      Differential bridge module; carries load cells LC1-4 (index 0) and
+      LC_FUEL (index 1, channel 0). Resolution in bits was not part of the
+      supplied module spec, so it is left null rather than guessed.
+
+  - type: NI-9476
+    count: 1
+    channels: 32
+    resolution_bits: null
+    output_range: "6-36 VDC, 250 mA/ch max"
+    rate: "500 microsecond update"
+    notes: >-
+      Sourcing digital output module; carries the 11 valve DOs (channels
+      0-10, in DC order) plus 3 reserved spares (channels 11-13). Channels
+      14-31 are unused in this build.
+
+  - type: NI-9205
+    count: 1
+    channels: 32
+    resolution_bits: 16
+    input_range: "±0.2 V to ±10 V (4 selectable ranges)"
+    rate: "250 kS/s aggregate, multiplexed"
+    notes: >-
+      Not assigned to any tag in this build. Reserved for future analog
+      inputs (e.g. additional spares); channel count is 32 single-ended or
+      16 differential depending on wiring, per the module spec.

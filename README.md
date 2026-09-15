@@ -73,6 +73,12 @@ reason.
 forcing, fault rollback, write sets, diagnostics and determinism. All 219 cases pass, including
 the 10,000-iteration boundary and abort chains in disabled or halted charts; no PLC xfails remain.
 
+## Integration review
+`docs/reviews/2026-09-15/integration-review.md` is the phase 2 review of record: every interface
+contract re-verified by running the system (probes, wire captures and panel screenshots are
+alongside it). `backend/scripts/integration_review.py` regenerates the probe evidence and, with
+`--observe`, records the live WebSocket traffic while an operator exercises the panel.
+
 ## Calibration status
 The plant model has 105 named constants, listed with their provenance in `docs/plant-model.md`.
 `python -m draco_sim.plant.calibrate` fits five of them to the 2026-09-11 recordings: the PB valve

@@ -4,8 +4,9 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
 
 ## Snapshot
 
-- **Phase 1** (build stages 1–9) is complete and was reviewed on 2026-09-13. The published review is now
-  outdated by phase 2: https://claude.ai/code/artifact/ec3bb330-2764-4300-aa59-98860f7d38c2
+- **Phase 1** (build stages 1–9) is complete and was reviewed on 2026-09-13. The published review at
+  https://claude.ai/code/artifact/ec3bb330-2764-4300-aa59-98860f7d38c2 is outdated by phase 2; the phase 2
+  review of record is `docs/reviews/2026-09-15/integration-review.md` (task 7, 2026-09-15).
 - **Phase 2** implements the stand team's answers of 2026-09-13 (`docs/decisions.md` D12) and the S1/S2
   rule derived from the data (D13).
 - **Backend tests:** task 3 completion run on 2026-09-15: `python -m pytest -q` from `backend/` gives
@@ -25,7 +26,7 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
 | 4 | Control panel update for the new abort semantics | Done 2026-09-15: panel, IDE toolbar, mock and 12 vitest cases; browser-checked against the real backend |
 | 5 | Scan-loop and protocol regression tests | Done 2026-09-15; both defects it found fixed by user decision D17 the same day |
 | 6 | Plant regression tests | Done 2026-09-15: 116 tests, 2 strict xfails for divide-by-zero configs awaiting the user |
-| 7 | Integration re-review and republish | Queued, unblocked by task 3 completion |
+| 7 | Integration re-review and republish | Done 2026-09-15: review of record in `docs/reviews/2026-09-15/`, no new defects, one new observation (hand-closed vents open at the latch). Revision B page saved as `review-page.html`; the user chose not to publish the artifact |
 
 ## Working rules for whoever resumes
 
@@ -564,38 +565,75 @@ they are nonsense configs and are not tested.
 
 ---
 
-## Task 7: Integration re-review and republish (queued)
+## Task 7: Integration re-review and republish (done 2026-09-15)
 
 ### 1. Current goal
 Re-verify every interface contract after phase 2, then republish the integration review at the same URL.
 
 ### 2. Current development status
-Unblocked: task 3 review and fixes are complete (2026-09-15), including the abort-test finding and
-the two engine bugs. Task 6 is done (2026-09-15).
+Done 2026-09-15 across two sessions. On disk, all under `docs/reviews/2026-09-15/`:
+- **`integration-review.md`:** the phase 2 review of record. Baseline (568 passed, 2 xfailed; 105
+  vitest), the six contracts re-verified (hotfire timeline at 30 and 50 Hz and live, abort and
+  automatic return live from the panel, bang-bang without the board hold, vent-open press, protocol
+  shapes on the wire, PLC and plant suites), findings, the phase 1 items now answered, and how to
+  reproduce.
+- **`backend/scripts/integration_review.py`:** the evidence generator. Default mode runs
+  deterministic `Simulator` probes that assert each contract before writing `probes.json`;
+  `--observe SECONDS` records the live WebSocket state changes and events while an operator
+  works the panel. Run from `backend/` with `PYTHONPATH=.`.
+- **Evidence:** `probes.json`; `browser-wire.json` (run, press, hotfire, ABORT at T+3.0, return
+  5.32 s later); `browser-press-hotfire.json` (vents closed by hand, both loops, press from 0 psi);
+  `browser-hotfire.json` (panel-started hotfire with both loops regulating, cards at T+0.02, 0.52,
+  8.02, 8.52, 8.72); `wire-vent-open.json` (LOX loop with PB1 open: S1 held open 20 s, PT4 752 psi
+  at 18 s, bottle 4000 → 3600); three panel screenshots.
+- **Result:** no new defects. Every probe and every observed frame matched `runtime.md`,
+  `protocol.md`, `plc-language.md` §6.5 and `plant-model.md` §6 (the vent-open table reproduces
+  exactly).
+- **README** gained an "Integration review" section.
+
+**Finish pass (2026-09-15, Claude Code, inline):**
+- **Re-run:** backend 568 passed, 2 xfailed in 17.6 s; vitest 105 passed; `integration_review.py`
+  regenerated `probes.json` identical to the committed file.
+- **New observation** (review §3 item 4): an abort opens hand-closed PB1/PB3 on the latch scan,
+  0.3 s before the recorded chain. The latch drops the pre-press manual close and `ABORT_4` writes
+  the vents later, so rule A2 leaves them open meanwhile; live, S1 was still open for 0.2 s.
+  Documented behaviour, so no code change. It is now part of stand-team question 1.
+- **Revision B page:** the live phase 1 artifact was read (title block, Barlow Semi Condensed and
+  IBM Plex, blueprint palette) and rebuilt for phase 2 in the same design as
+  `docs/reviews/2026-09-15/review-page.html`. It carries the nine phase 1 questions and their
+  answers, the contracts, a hotfire valve timing diagram, the live abort log with recorded vs
+  simulated timing, bang-bang checks, vent-open charts, constants by source (80 placeholder,
+  9 physical, 6 P&ID, 5 user, 5 calibrated), replay RMS, suites, findings and open questions.
+- **Not published:** the auto-mode classifier refused the unrequested publish, and the user then
+  decided not to publish the artifact. The claude.ai URL keeps the phase 1 page.
+- Fixed the review's reproduce snippet (`set PYTHONPATH=.` is cmd syntax in a bash block).
 
 ### 3. Key decisions made
-Verify by running the system, not by reading reports. The republished review must replace the answered
-decisions and the old placeholder hotfire with the phase-2 results.
+- Verify by running the system, not by reading reports. Probes assert, then record, so a stale
+  evidence file cannot be produced silently.
+- The review of record lives in the repo. The claude.ai artifact cannot be read or updated from a
+  Cursor session (no artifact tool; the page is JavaScript-only), so the phase 1 URL stays as a
+  pointer and `integration-review.md` §5 says how to republish it from a session that has the tool.
 
 ### 4. What worked and what failed
-The 2026-09-13 review process (probe, browser end-to-end check, one visual pass, publish) caught real
-defects. The artifact's live watch has since ended because its connection was lost.
+- **Worked:** the `--observe` capture alongside panel clicks gives per-scan evidence of what the
+  operator saw. Dispatching a DOM `click` on `g.valve-symbol` via CDP is the reliable way to
+  actuate valve symbols; `browser_mouse_click_xy` takes screenshot coordinates, not viewport ones.
+- **Failed:** the Cursor browser MCP dropped out twice mid-session (about 30 s each) and stayed
+  down after the hotfire, so the vent-open check was driven over the WebSocket instead of the
+  panel, and the post-hotfire screen was read via `read` rather than a screenshot.
 
 ### 5. Immediate next steps
-1. Restart the backend with the `backend-server` preview in `.claude/launch.json`.
-2. Run the browser end-to-end check:
-   - IDE load, run, abort, automatic return
-   - the hotfire timeline
-   - bang-bang behaviour without the board hold
-   - pressurising with a vent open
-3. Read the existing artifact with action `read` on its URL, because the session scratchpad copy may be
-   gone.
-4. Update the content and republish with `url` set to the URL above.
-5. Update `README.md` and memory.
+1. **Ask the stand team** the vent-at-latch half of question 1.
+2. The artifact stays unpublished by the user's decision. If that changes, `integration-review.md`
+   §5 says how to publish `review-page.html` to the same URL.
 
 ### 6. Open risks, questions, or blockers
-A new session must pass the artifact URL explicitly to update it rather than create a new one. Until then
-the published review shows outdated decisions.
+- The phase 1 artifact still shows the pre-D12 decisions until someone republishes it.
+- A completed hotfire leaves the bang-bang loops enabled and regulating (only an abort switches them
+  off). Documented behaviour, but worth saying in operator training.
+- Unexercised on screen this pass: the vent-open press (wire only) and the D14 loop lockout after
+  return (browser-checked in task 4).
 
 ---
 
@@ -613,6 +651,8 @@ the published review shows outdated decisions.
 ## Open questions for the stand team
 
 1. After an abort, should control return only after the recorded 3.0 s hold, or after an arm step?
+   And should a vent the operator closed before pre-press stay closed until the abort chain opens
+   it at +0.3 s, as recorded? Today it opens on the latch scan (task 7, review §3 item 4).
 2. Please confirm the orchestrator refinements in D12: thresholds on real readings, output forces cleared
    at the latch, stop, reset and program loads refused while latched, and tripped thresholds that can be
    disabled during the latch.

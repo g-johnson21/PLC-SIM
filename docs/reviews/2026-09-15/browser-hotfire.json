@@ -1,0 +1,1494 @@
+{
+  "url": "ws://127.0.0.1:8765/ws",
+  "wall_duration_s": 60.0,
+  "programs": [
+    {
+      "name": "hotfire",
+      "role": "sequence"
+    },
+    {
+      "name": "bangbang_lox",
+      "role": "regulation"
+    },
+    {
+      "name": "bangbang_fuel",
+      "role": "regulation"
+    }
+  ],
+  "events": [
+    {
+      "type": "event",
+      "t": 66.66,
+      "scan": 3333,
+      "level": "sequence",
+      "text": "T+0.000 hotfire STARTED (manual commands stay in force: PB1, PB3)",
+      "source": "hmi"
+    },
+    {
+      "type": "event",
+      "t": 66.68,
+      "scan": 3334,
+      "level": "sequence",
+      "text": "T+0.020 hotfire OPEN_LOX_MAIN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 66.68,
+      "scan": 3334,
+      "level": "command",
+      "text": "MV-LOX (PB2) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 67.18,
+      "scan": 3359,
+      "level": "sequence",
+      "text": "T+0.520 hotfire OPEN_FUEL_MAIN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 67.18,
+      "scan": 3359,
+      "level": "command",
+      "text": "MV-F (PB4) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 69.18,
+      "scan": 3459,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 69.28,
+      "scan": 3464,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 71.4,
+      "scan": 3570,
+      "level": "command",
+      "text": "SV-FBB (S2) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 71.5,
+      "scan": 3575,
+      "level": "command",
+      "text": "SV-FBB (S2) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 71.72,
+      "scan": 3586,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 71.82000000000001,
+      "scan": 3591,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 74.26,
+      "scan": 3713,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 74.38,
+      "scan": 3719,
+      "level": "command",
+      "text": "SV-LOXBB (S1) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 74.68,
+      "scan": 3734,
+      "level": "sequence",
+      "text": "T+8.020 hotfire CLOSE_LOX_MAIN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 74.68,
+      "scan": 3734,
+      "level": "command",
+      "text": "MV-LOX (PB2) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.18,
+      "scan": 3759,
+      "level": "sequence",
+      "text": "T+8.520 hotfire CLOSE_FUEL_MAIN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.18,
+      "scan": 3759,
+      "level": "command",
+      "text": "MV-F (PB4) -> CLOSED",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.38,
+      "scan": 3769,
+      "level": "sequence",
+      "text": "T+8.720 hotfire OPEN_PURGES",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.38,
+      "scan": 3769,
+      "level": "command",
+      "text": "SV-FPURGE (S5) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.38,
+      "scan": 3769,
+      "level": "command",
+      "text": "SV-LOXPURGE (S4) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.60000000000001,
+      "scan": 3780,
+      "level": "command",
+      "text": "SV-FBB (S2) -> OPEN",
+      "source": "plc"
+    },
+    {
+      "type": "event",
+      "t": 75.7,
+      "scan": 3785,
+      "level": "command",
+      "text": "SV-FBB (S2) -> CLOSED",
+      "source": "plc"
+    }
+  ],
+  "state_changes": [
+    {
+      "t": 62.06,
+      "scan": 3103,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": false,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3771.450055179002,
+        "PT3": 921.3315788332568,
+        "PT4": 922.1836161052355,
+        "PT11": 3823.450118955978,
+        "PT13": 896.9009839013802,
+        "PT14": 897.469008749366
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": true,
+        "active_sequence": null,
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 66.68,
+      "scan": 3334,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": false,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3771.450055179002,
+        "PT3": 921.3315788332568,
+        "PT4": 922.1836161052355,
+        "PT11": 3823.450118955978,
+        "PT13": 896.9009839013802,
+        "PT14": 897.469008749366
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 67.18,
+      "scan": 3359,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3771.450055179002,
+        "PT3": 917.1980206860908,
+        "PT4": 917.956588556265,
+        "PT11": 3823.450118955978,
+        "PT13": 896.9009839013802,
+        "PT14": 897.469008749366
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 69.18,
+      "scan": 3459,
+      "outputs": {
+        "S1": true,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3771.450055179002,
+        "PT3": 888.8518026904346,
+        "PT4": 889.6209429351054,
+        "PT11": 3823.450118955978,
+        "PT13": 877.6794459405208,
+        "PT14": 878.2027784781321
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "PRESS",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 69.28,
+      "scan": 3464,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3765.2988554715416,
+        "PT3": 919.7567755956514,
+        "PT4": 909.1800760361597,
+        "PT11": 3823.450118955978,
+        "PT13": 876.5849648988227,
+        "PT14": 877.1080571551951
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 71.4,
+      "scan": 3570,
+      "outputs": {
+        "S1": false,
+        "S2": true,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3762.743864968052,
+        "PT3": 892.9779121192046,
+        "PT4": 893.7319146458456,
+        "PT11": 3823.450118955978,
+        "PT13": 854.9863246447635,
+        "PT14": 855.5022084639794
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "PRESS",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 71.5,
+      "scan": 3575,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3762.743864968052,
+        "PT3": 891.7173967416522,
+        "PT4": 892.4709187058162,
+        "PT11": 3817.371003620089,
+        "PT13": 890.509743236586,
+        "PT14": 880.9239635049679
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 71.72,
+      "scan": 3586,
+      "outputs": {
+        "S1": true,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3762.743864968052,
+        "PT3": 888.885922626312,
+        "PT4": 889.6384834655215,
+        "PT11": 3814.8464487401525,
+        "PT13": 894.3917269269662,
+        "PT14": 894.9042468088413
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "PRESS",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 71.82000000000001,
+      "scan": 3591,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3756.60868400983,
+        "PT3": 919.1320443753625,
+        "PT4": 908.413338603874,
+        "PT11": 3814.8464487401525,
+        "PT13": 893.2974861665061,
+        "PT14": 893.8095254859041
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 74.26,
+      "scan": 3713,
+      "outputs": {
+        "S1": true,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3754.0617028809597,
+        "PT3": 888.8340218787803,
+        "PT4": 889.570003312528,
+        "PT11": 3814.8464487401525,
+        "PT13": 868.4870065964465,
+        "PT14": 868.990876353733
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "PRESS",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 74.38,
+      "scan": 3719,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": true,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3746.2109138793285,
+        "PT3": 924.8130136989358,
+        "PT4": 913.6449820113171,
+        "PT11": 3814.8464487401525,
+        "PT13": 867.3560028064846,
+        "PT14": 867.8593920012947
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 74.68,
+      "scan": 3734,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": true,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3743.6703402501535,
+        "PT3": 921.2304204318174,
+        "PT4": 921.96063511584,
+        "PT11": 3814.8464487401525,
+        "PT13": 864.4252925396141,
+        "PT14": 864.9277206094692
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 75.18,
+      "scan": 3759,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": false,
+        "S5": false,
+        "S4": false,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3743.6703402501535,
+        "PT3": 914.6416685889164,
+        "PT4": 915.3500176802287,
+        "PT11": 3814.8464487401525,
+        "PT13": 859.4757393062553,
+        "PT14": 859.9651921892282
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 75.38,
+      "scan": 3769,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": false,
+        "S5": true,
+        "S4": true,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3743.6703402501535,
+        "PT3": 911.8174029107333,
+        "PT4": 912.5351229703496,
+        "PT11": 3814.8464487401525,
+        "PT13": 857.2990315660259,
+        "PT14": 857.7870427615666
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 75.60000000000001,
+      "scan": 3780,
+      "outputs": {
+        "S1": false,
+        "S2": true,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": false,
+        "S5": true,
+        "S4": true,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3743.6703402501535,
+        "PT3": 909.4592828353811,
+        "PT4": 910.2320272986309,
+        "PT11": 3814.8464487401525,
+        "PT13": 854.8515268699246,
+        "PT14": 855.33881722175
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "PRESS",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    },
+    {
+      "t": 75.7,
+      "scan": 3785,
+      "outputs": {
+        "S1": false,
+        "S2": false,
+        "PB1": false,
+        "PB3": false,
+        "PB2": false,
+        "PB4": false,
+        "S5": true,
+        "S4": true,
+        "PB5": false,
+        "S3": false,
+        "PB6": false,
+        "SPARE_IGNITER": false,
+        "SPARE_CAMERA_TRIGGER": false,
+        "SPARE_COMPRESSOR": false
+      },
+      "inputs": {
+        "PT1": 3743.6703402501535,
+        "PT3": 908.8982261433137,
+        "PT4": 909.6856277621166,
+        "PT11": 3808.7817502785783,
+        "PT13": 888.1311992559548,
+        "PT14": 878.7088107665661
+      },
+      "abort": {
+        "thresholds": [
+          {
+            "tag": "PT0",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (chamber)"
+          },
+          {
+            "tag": "PT5",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (LOX manifold)"
+          },
+          {
+            "tag": "PT15",
+            "op": ">",
+            "value": 0.0,
+            "enabled": false,
+            "label": "PLACEHOLDER -- operator-set (fuel manifold)"
+          }
+        ],
+        "tripped": null,
+        "latched": false,
+        "waiting_on": []
+      },
+      "hmi": {
+        "abort": false,
+        "bb": {
+          "lox": {
+            "setpoint": 904.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          },
+          "fuel": {
+            "setpoint": 870.0,
+            "deadband": 15.0,
+            "enable": true,
+            "state": "HOLD",
+            "abort_off": []
+          }
+        },
+        "manual_allowed": false,
+        "active_sequence": "hotfire",
+        "manual": {
+          "PB1": false,
+          "PB3": false
+        }
+      }
+    }
+  ]
+}

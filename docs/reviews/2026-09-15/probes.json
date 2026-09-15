@@ -1,0 +1,326 @@
+{
+  "initial": {
+    "bottle_psi": 4000.0,
+    "lox_ullage_psi": 0.0,
+    "fuel_ullage_psi": 0.0,
+    "lox_mass_lbm": 60.0,
+    "fuel_mass_lbm": 40.0,
+    "muscle_bus_psi": 100.0
+  },
+  "hotfire": {
+    "30": {
+      "card_commands_from_start_s": [
+        [
+          0.033333,
+          "PB2",
+          "OPEN"
+        ],
+        [
+          0.533333,
+          "PB4",
+          "OPEN"
+        ],
+        [
+          8.033333,
+          "PB2",
+          "CLOSED"
+        ],
+        [
+          8.533333,
+          "PB4",
+          "CLOSED"
+        ],
+        [
+          8.733333,
+          "S5",
+          "OPEN"
+        ],
+        [
+          8.733333,
+          "S4",
+          "OPEN"
+        ],
+        [
+          11.733333,
+          "S5",
+          "CLOSED"
+        ],
+        [
+          11.733333,
+          "S4",
+          "CLOSED"
+        ]
+      ],
+      "card_latency_s": 0.03333333333333333,
+      "final_steps": [
+        "COMPLETE"
+      ]
+    },
+    "50": {
+      "card_commands_from_start_s": [
+        [
+          0.02,
+          "PB2",
+          "OPEN"
+        ],
+        [
+          0.52,
+          "PB4",
+          "OPEN"
+        ],
+        [
+          8.02,
+          "PB2",
+          "CLOSED"
+        ],
+        [
+          8.52,
+          "PB4",
+          "CLOSED"
+        ],
+        [
+          8.72,
+          "S5",
+          "OPEN"
+        ],
+        [
+          8.72,
+          "S4",
+          "OPEN"
+        ],
+        [
+          11.72,
+          "S5",
+          "CLOSED"
+        ],
+        [
+          11.72,
+          "S4",
+          "CLOSED"
+        ]
+      ],
+      "card_latency_s": 0.02,
+      "final_steps": [
+        "COMPLETE"
+      ]
+    }
+  },
+  "bangbang": {
+    "settled_15s_psi": {
+      "PT3": 926.870541944834,
+      "PT13": 897.588188243698
+    },
+    "changes_over_0_1psi_in_first_second": {
+      "PT3": [
+        0.06,
+        0.08,
+        0.1,
+        0.12,
+        0.14,
+        0.16,
+        0.18,
+        0.2,
+        0.22,
+        0.24,
+        0.26,
+        0.28,
+        0.3,
+        0.32,
+        0.34,
+        0.36,
+        0.38,
+        0.4,
+        0.42,
+        0.44,
+        0.46,
+        0.48,
+        0.5,
+        0.52,
+        0.54,
+        0.56,
+        0.58,
+        0.6,
+        0.62,
+        0.64,
+        0.66,
+        0.68,
+        0.7,
+        0.72,
+        0.74,
+        0.76,
+        0.78,
+        0.8,
+        0.82,
+        0.84,
+        0.86,
+        0.88,
+        0.9,
+        0.92,
+        0.94,
+        0.96,
+        0.98,
+        1.0
+      ],
+      "PT13": [
+        0.06,
+        0.08,
+        0.1,
+        0.12,
+        0.14,
+        0.16,
+        0.18,
+        0.2,
+        0.22,
+        0.24,
+        0.26,
+        0.28,
+        0.3,
+        0.32,
+        0.34,
+        0.36,
+        0.38,
+        0.4,
+        0.42,
+        0.44,
+        0.46,
+        0.48,
+        0.5,
+        0.52,
+        0.54,
+        0.56,
+        0.58,
+        0.6,
+        0.62,
+        0.64,
+        0.66,
+        0.68,
+        0.7,
+        0.72,
+        0.74,
+        0.76,
+        0.78,
+        0.8,
+        0.82,
+        0.84,
+        0.86,
+        0.88,
+        0.9,
+        0.92,
+        0.94,
+        0.96,
+        0.98,
+        1.0
+      ]
+    },
+    "panel": {
+      "lox": {
+        "setpoint": 904.0,
+        "deadband": 15.0,
+        "enable": true,
+        "state": "HOLD",
+        "abort_off": []
+      },
+      "fuel": {
+        "setpoint": 870.0,
+        "deadband": 15.0,
+        "enable": true,
+        "state": "HOLD",
+        "abort_off": []
+      }
+    }
+  },
+  "abort": {
+    "latch": {
+      "thresholds": [
+        {
+          "tag": "PT1",
+          "op": ">",
+          "value": 3391.167937810297,
+          "enabled": true,
+          "label": "live reading minus 10%"
+        }
+      ],
+      "tripped": {
+        "tag": "PT1",
+        "value": 3767.9643753447745,
+        "threshold": 3391.167937810297,
+        "t": 16.02,
+        "source": "threshold"
+      },
+      "latched": true,
+      "waiting_on": [
+        "hotfire at ABORT",
+        "PT1 > 3391.17 still tripped"
+      ]
+    },
+    "held": {
+      "thresholds": [
+        {
+          "tag": "PT1",
+          "op": ">",
+          "value": 3391.167937810297,
+          "enabled": true,
+          "label": "live reading minus 10%"
+        }
+      ],
+      "tripped": {
+        "tag": "PT1",
+        "value": 3767.9643753447745,
+        "threshold": 3391.167937810297,
+        "t": 16.02,
+        "source": "threshold"
+      },
+      "latched": true,
+      "waiting_on": [
+        "PT1 > 3391.17 still tripped"
+      ]
+    },
+    "returned": {
+      "thresholds": [],
+      "tripped": {
+        "tag": "PT1",
+        "value": 3767.9643753447745,
+        "threshold": 3391.167937810297,
+        "t": 16.02,
+        "source": "threshold"
+      },
+      "latched": false,
+      "waiting_on": []
+    },
+    "programs_enabled_after_return": {
+      "abort_monitor": true,
+      "hotfire": true,
+      "gn2_purge": true,
+      "bangbang_lox": false,
+      "bangbang_fuel": false
+    },
+    "manual_after_return_accepted": true,
+    "stop_run_safe": true
+  },
+  "vent_open": {
+    "uncalibrated_open": {
+      "PT3@5s": 1310.7648490967945,
+      "PT13@5s": 1411.1112125039583,
+      "PT3@15s": 1310.5411320624105,
+      "PT13@15s": 1405.8239737285392,
+      "PT3@60s": 773.2189699750766,
+      "PT13@60s": 873.1547955818171
+    },
+    "calibrated_open": {
+      "PT3@5s": 788.9352659040607,
+      "PT13@5s": 621.5172968629984,
+      "PT3@15s": 756.31415978962,
+      "PT13@15s": 523.3813716830348,
+      "PT3@60s": 301.7964565678159,
+      "PT13@60s": 210.5488496827259
+    },
+    "calibrated_closed": {
+      "PT3@5s": 1319.3809697994136,
+      "PT13@5s": 1419.0778358680316,
+      "PT3@15s": 1319.2195573658155,
+      "PT13@15s": 1415.5120065375552,
+      "PT3@60s": 1301.7823176371905,
+      "PT13@60s": 1400.8530627354
+    }
+  }
+}

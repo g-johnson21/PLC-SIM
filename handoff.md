@@ -8,13 +8,14 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
   outdated by phase 2: https://claude.ai/code/artifact/ec3bb330-2764-4300-aa59-98860f7d38c2
 - **Phase 2** implements the stand team's answers of 2026-09-13 (`docs/decisions.md` D12) and the S1/S2
   rule derived from the data (D13).
-- **Backend tests:** `python -m pytest -q` from `backend/` gives 413 passed, 9 xfailed, in 8.7 s.
-- **Frontend:** `npm test` gives 102 passed. `npm run build` passes. `npm run lint` shows one existing
+- **Backend tests:** `python -m pytest -q` from `backend/` gives 423 passed, 6 xfailed (the task 3 engine
+  bugs).
+- **Frontend:** `npm test` gives 105 passed. `npm run build` passes. `npm run lint` shows one existing
   warning in `src/gc/useSeriesBuffer.ts`.
 - **Demo:** `python -m draco_sim.runtime.demo` exits 0 with the new hotfire procedure.
 - **Calibration:** `python -m draco_sim.plant.calibrate` (about 70 s) writes
   `backend/draco_sim/plant/calibration.yaml`, which `Plant()` and the runtime load by default.
-- **Authority:** `docs/decisions.md` D1–D15 overrides the original orchestrator brief wherever they differ.
+- **Authority:** `docs/decisions.md` D1–D17 overrides the original orchestrator brief wherever they differ.
 
 | # | Task | Status |
 |---|---|---|
@@ -22,7 +23,7 @@ Paused 2026-09-14 at the user's request. No agents are running. Resume from this
 | 2 | Plant phase 2: IPA, board hold removal, calibration | Done 2026-09-14: five constants calibrated, vent-open answer, docs, D15 |
 | 3 | PLC engine regression suite | 92 tests landed and pass; 6 xfails document two engine bugs; unreviewed |
 | 4 | Control panel update for the new abort semantics | Done 2026-09-15: panel, IDE toolbar, mock and 12 vitest cases; browser-checked against the real backend |
-| 5 | Scan-loop and protocol regression tests | Done 2026-09-15: 140 tests pass; 3 strict xfails pin two defects awaiting the user |
+| 5 | Scan-loop and protocol regression tests | Done 2026-09-15; both defects it found fixed by user decision D17 the same day |
 | 6 | Plant regression tests | Queued, unblocked |
 | 7 | Integration re-review and republish | Queued, blocked on tasks 3 and 6 |
 
@@ -410,7 +411,19 @@ Done 2026-09-15, inline with no agents. No production code changed. On disk:
 - **Checks:** backend 413 passed and 9 xfailed in 8.7 s; the protocol suite passed three runs in a
   row; pyflakes clean.
 
-**Two defects found, pinned as strict xfails, code left unchanged:**
+**Two defects found.** Both were resolved on 2026-09-15 by user decision D17, and their xfails are gone.
+- **The fix, backend.** `plc_stop()` now cold-restarts the PLC and clears manual commands, output
+  forces, charts and loop enables. Both example loops write their solenoid only while enabled and
+  close it once on disable. While a loop is enabled, manual writes to its solenoid are refused, and
+  enabling a loop releases a manual command on its solenoid.
+- **The fix, panel and mock.** The panel lockouts and the mock mirror all of this.
+- **Checks.** Tests were added in `test_arbitration.py` and `test_safe_state.py`. The demo's scenarios C and D
+  were updated, and the docs (`runtime.md` §1/§2/§4/§8, `protocol.md` rule 3 and `plc.stop`,
+  `plc-language.md` §4.3/§5.5/§7.3) were revised. It was browser-checked against the real backend:
+  the S1 lockout while LOX is enabled, Stop and Run leaving everything closed and disabled, and a
+  manual S1 open afterwards.
+
+The defects as originally found:
 1. **A stopped PLC does not drop manual commands.** `docs/runtime.md` §2 and D16 say it does, but the
    drop sits in `Simulator._arbitrate`, which never runs while stopped. A manual PB1 close made before
    `plc.stop` stays in `hmi.manual` and re-seals the vent on `plc.run`, the trap §2 warns about. The
@@ -440,9 +453,10 @@ Done 2026-09-15, inline with no agents. No production code changed. On disk:
   defect 1 was found.
 
 ### 5. Immediate next steps
-1. **User decision on defect 2:** change the examples, change `protocol.md` rule 3, or add a manual
-   override path.
-2. **Fix defect 1** with the one-line `plc_stop()` change, then remove its xfail marker.
+None for task 5. Confirm the two D17 orchestrator refinements with the user:
+- a stop cold-restarts program variables, which disarms `abort_monitor` and drops operator-written
+  `plc.globals`;
+- manual writes to an enabled loop's solenoid are refused.
 
 ### 6. Open risks, questions, or blockers
 - The entry-point test picks a free port and releases it before the server binds; another process
@@ -489,7 +503,7 @@ Replay error ceilings can be brittle; keep fixtures small.
 Re-verify every interface contract after phase 2, then republish the integration review at the same URL.
 
 ### 2. Current development status
-Blocked on task 6 and on the task 3 review. The task 5 defects should be settled first too.
+Blocked on task 6 and on the task 3 review.
 
 ### 3. Key decisions made
 Verify by running the system, not by reading reports. The republished review must replace the answered
@@ -545,7 +559,7 @@ the published review shows outdated decisions.
 
 ## File map
 
-- **`docs/decisions.md`:** D1–D14, authoritative.
+- **`docs/decisions.md`:** D1–D17, authoritative.
 - **`docs/data-survey.md`:** the recordings, board telemetry fields and RUD timeline.
 - **`docs/runtime.md`, `docs/protocol.md`, `docs/plc-language.md` §6.4–6.5:** current for D12 as of
   2026-09-14.

@@ -16,7 +16,7 @@ export const EXAMPLES: ProgramSource[] = [
       "version": 1,
       "language": "LD",
       "name": "bangbang_fuel",
-      "description": "Fuel tank bang-bang pressurisation in ladder form: PT13 -> S2. Same hysteresis as bangbang_lox; setpoint and deadband are operator-set at runtime (initial values recorded from the stand's last pre-fire configuration, 2026-09-11).",
+      "description": "Fuel tank bang-bang pressurisation in ladder form: PT13 -> S2. Same hysteresis as bangbang_lox; setpoint and deadband are operator-set at runtime (initial values recorded from the stand's last pre-fire configuration, 2026-09-11). The loop drives S2 only while enabled (decisions.md D17): disabled, it closes S2 once and then leaves it to the ground controller.",
       "vars": [
         {
           "name": "setpoint_fuel",
@@ -49,6 +49,13 @@ export const EXAMPLES: ProgramSource[] = [
           "type": "REAL",
           "scope": "VAR",
           "comment": "setpoint + deadband"
+        },
+        {
+          "name": "was_enabled",
+          "type": "BOOL",
+          "scope": "VAR",
+          "init": false,
+          "comment": "bb_fuel_enable on the previous scan"
         }
       ],
       "rungs": [
@@ -79,7 +86,7 @@ export const EXAMPLES: ProgramSource[] = [
         },
         {
           "id": "r2",
-          "comment": "Below the band: open the fuel press solenoid",
+          "comment": "Enabled and below the band: open the fuel press solenoid",
           "logic": {
             "type": "series",
             "elements": [
@@ -108,7 +115,7 @@ export const EXAMPLES: ProgramSource[] = [
         },
         {
           "id": "r3",
-          "comment": "Above the band, or loop disabled: close it",
+          "comment": "Enabled and above the band, or disabled on this scan: close it",
           "logic": {
             "type": "series",
             "elements": [
@@ -135,11 +142,22 @@ export const EXAMPLES: ProgramSource[] = [
                     ]
                   },
                   {
-                    "id": "r3.dis",
-                    "type": "contact",
-                    "kind": "NC",
-                    "operand": "bb_fuel_enable",
-                    "comment": "disabled -> force closed"
+                    "type": "series",
+                    "elements": [
+                      {
+                        "id": "r3.dis",
+                        "type": "contact",
+                        "kind": "NC",
+                        "operand": "bb_fuel_enable"
+                      },
+                      {
+                        "id": "r3.was",
+                        "type": "contact",
+                        "kind": "NO",
+                        "operand": "was_enabled",
+                        "comment": "disabled this scan -> close once"
+                      }
+                    ]
                   }
                 ]
               },
@@ -151,6 +169,27 @@ export const EXAMPLES: ProgramSource[] = [
               }
             ]
           }
+        },
+        {
+          "id": "r4",
+          "comment": "Remember the enable for the next scan; while disabled the loop leaves S2 to the GC",
+          "logic": {
+            "type": "series",
+            "elements": [
+              {
+                "id": "r4.en",
+                "type": "contact",
+                "kind": "NO",
+                "operand": "bb_fuel_enable"
+              },
+              {
+                "id": "r4.was",
+                "type": "coil",
+                "kind": "COIL",
+                "operand": "was_enabled"
+              }
+            ]
+          }
         }
       ]
     }
@@ -158,7 +197,7 @@ export const EXAMPLES: ProgramSource[] = [
   {
     "name": "bangbang_lox",
     "language": "ST",
-    "source": "(* LOX tank bang-bang pressurisation: PT3 (LOX bang-bang board pressure) -> S1.\n   S1 opens below setpoint - deadband, closes above setpoint + deadband and holds\n   in between, which is the hysteresis band the operator actually tunes. *)\n\nPROGRAM bangbang_lox\nVAR_GLOBAL\n    (* Operator-set at runtime, not constants. These initial values are the ones\n       recorded from the stand's last pre-fire configuration (2026-09-11). *)\n    setpoint : REAL := 904.0;   (* psi *)\n    deadband : REAL := 15.0;    (* psi *)\n    bb_lox_enable : BOOL := FALSE;\nEND_VAR\n\n    IF NOT bb_lox_enable THEN\n        S1 := FALSE;\n    ELSIF PT3 < setpoint - deadband THEN\n        S1 := TRUE;\n    ELSIF PT3 > setpoint + deadband THEN\n        S1 := FALSE;\n    END_IF;   // no ELSE: inside the band S1 holds its last state\n\nEND_PROGRAM\n"
+    "source": "(* LOX tank bang-bang pressurisation: PT3 (LOX bang-bang board pressure) -> S1.\n   S1 opens below setpoint - deadband, closes above setpoint + deadband and holds\n   in between, which is the hysteresis band the operator actually tunes.\n   The loop drives S1 only while enabled (decisions.md D17): disabled, it closes S1\n   once and then leaves it to the ground controller. *)\n\nPROGRAM bangbang_lox\nVAR_GLOBAL\n    (* Operator-set at runtime, not constants. These initial values are the ones\n       recorded from the stand's last pre-fire configuration (2026-09-11). *)\n    setpoint : REAL := 904.0;   (* psi *)\n    deadband : REAL := 15.0;    (* psi *)\n    bb_lox_enable : BOOL := FALSE;\nEND_VAR\nVAR\n    was_enabled : BOOL := FALSE;   (* bb_lox_enable on the previous scan *)\nEND_VAR\n\n    IF bb_lox_enable THEN\n        IF PT3 < setpoint - deadband THEN\n            S1 := TRUE;\n        ELSIF PT3 > setpoint + deadband THEN\n            S1 := FALSE;\n        END_IF;   // no ELSE: inside the band S1 holds its last state\n    ELSIF was_enabled THEN\n        S1 := FALSE;   (* disabled this scan: close once, then S1 is the GC's *)\n    END_IF;\n    was_enabled := bb_lox_enable;\n\nEND_PROGRAM\n"
   },
   {
     "name": "gn2_purge",

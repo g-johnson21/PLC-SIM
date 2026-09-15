@@ -315,7 +315,7 @@ def scenario_b(pt0_at_1s: float) -> None:
 
 
 def scenario_c() -> None:
-    banner("SCENARIO C -- manual commands, regulation and sequences fighting over coils")
+    banner("SCENARIO C -- manual commands, bang-bang solenoid ownership and sequences")
     sim = new_sim()
     sim.plc_run()
     sim.run_for(0.5)
@@ -329,12 +329,22 @@ def scenario_c() -> None:
     sim.run_for(0.2)
     print(f"LOX loop enabled, state={sim.read(['hmi.bb.lox.state'])['hmi.bb.lox.state']}, "
           f"S1={sim.read(['S1'])['S1']}")
-    sim.write({"S1": False})
+    try:
+        sim.write({"S1": False})
+        print("write S1=False while the LOX loop is enabled: ACCEPTED (unexpected)")
+    except SimError as exc:
+        print(f"write S1=False while the LOX loop is enabled: rejected [{exc.code}] {exc.message}")
+    sim.write({"hmi.bb.lox.enable": False})
+    sim.step()
+    print(f"LOX loop disabled mid-press: S1={sim.read(['S1'])['S1']} (the loop closes it once, "
+          f"then leaves it to the operator)")
+    sim.write({"S1": True})
     sim.run_for(0.2)
     snap = sim.snapshot(["hmi", "outputs"])
-    print(f"after write S1=False (accepted, stored as a manual command): "
-          f"S1={snap['outputs']['S1']} -- the loop writes S1 every scan while pressing, "
-          f"so the loop wins; manual={snap['hmi']['manual']}")
+    print(f"write S1=True with the loop disabled: accepted, S1={snap['outputs']['S1']}, "
+          f"manual={snap['hmi']['manual']}")
+    sim.write({"S1": False})
+    sim.step()
 
     sim.sequence_start("gn2_purge")
     sim.run_for(0.2)
@@ -385,6 +395,12 @@ def scenario_d() -> None:
         print(f"  {sim.t:6.2f} {sim.scan:6d} {v['PT4']:9.2f} {v['PT14']:9.2f} "
               f"{st.node_p_psig['lox_ullage']:11.2f} {st.node_p_psig['fuel_ullage']:12.2f} "
               f"{st.lox_mass_kg:8.3f}")
+    sim.plc_run()
+    sim.run_for(1.0)
+    snap = sim.snapshot(["outputs", "hmi"])
+    print(f"run again: open={sorted(t for t, v in snap['outputs'].items() if v)}, loops enabled="
+          f"{[loop for loop, vals in snap['hmi']['bb'].items() if vals['enable']]}, "
+          f"manual={snap['hmi']['manual']} -- nothing moves until the operator commands it")
     print()
     print("--- event log (stop onward) ---")
     print(sim.events.render(e for e in sim.events if e.level != "info" or "STOP" in e.text))

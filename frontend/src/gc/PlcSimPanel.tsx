@@ -69,7 +69,11 @@ export function PlcSimPanel({ sim }: Props) {
         <button onClick={() => void run(() => sim.sim.run())} disabled={running}>
           Run
         </button>
-        <button onClick={() => void run(() => sim.sim.stop())} disabled={!running || stopBlocked !== null} title={stopBlocked ?? undefined}>
+        <button
+          onClick={() => void run(() => sim.sim.stop())}
+          disabled={!running || stopBlocked !== null}
+          title={stopBlocked ?? 'Every valve to its default state; clears manual commands, forces, sequences and loop enables so nothing moves on Run'}
+        >
           Stop
         </button>
         <button

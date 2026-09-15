@@ -311,6 +311,12 @@ class Simulator:
         self._emit("info", "PLC RUN", "hmi")
 
     def plc_stop(self) -> None:
+        """A stopped PLC is a safe stand, and it stays safe when the PLC runs again (D14,
+        D17): every coil de-energizes, and nothing that could command a valve on the next
+        plc.run is left behind -- no manual command, output force, running chart, enabled
+        bang-bang loop or held coil. The runtime gets a cold restart (variables back to
+        their declared values). The program set, input forces, the HMI setpoints and the
+        programs an abort switched off are kept."""
         self._refuse_while_latched("plc.stop")
         if not self._running:
             return
@@ -320,6 +326,27 @@ class Simulator:
             self._hmi_abort = False
             self._emit("abort", "pending abort request dropped: the PLC is stopped and every "
                                 "output is at its fail-safe state", "hmi")
+        charts = self._rt.sfc_state()
+        forces = sorted(n for n in self._rt.forced() if n.upper() in self._output_set)
+        cleared = [f"{what}: {', '.join(names)}" for what, names in (
+            ("manual commands", sorted(self._manual)),
+            ("output forces", forces),
+            ("sequences", [p.name for p in self._compiled
+                           if p.is_sfc and charts.get(p.name, {}).get("running")]),
+            ("bang-bang loops", [loop for loop, vals in self._bb.items() if vals["enable"]]),
+        ) if names]
+        for name in forces:
+            self._rt.unforce(name)
+        self._rt.reset()
+        for name in self._abort_disabled:
+            self._rt.set_program_enabled(name, False)
+        self._seq_t0.clear()
+        for loop in self._bb:
+            self._bb[loop]["enable"] = False
+        self._mirror_bb()
+        self._clear_manual(forget_plc=True)
+        if cleared:
+            self._emit("warn", "cleared so nothing moves on plc.run: " + "; ".join(cleared), "hmi")
 
     def plc_reset(self) -> None:
         self._refuse_while_latched("plc.reset")
@@ -705,13 +732,13 @@ class Simulator:
         moment an abort cleared the manual commands. A coil nothing has driven sits
         de-energized, the way the hardware does.
         """
-        # a running sequence leaves manual commands in force; only an abort (or a
-        # stopped PLC, which holds every coil safe) releases them
-        if self._manual and (self._abort_latched or not self._running):
+        # a running sequence leaves manual commands in force; only an abort releases them
+        # here (plc_stop drops them itself)
+        if self._manual and self._abort_latched:
             dropped = ", ".join(sorted(self._manual))
             self._manual.clear()
             self._emit("warn", f"manual commands dropped ({dropped}): the stand is "
-                               f"under abort control or the PLC is stopped", "sim")
+                               f"under abort control", "sim")
         if self._manual:
             # a chart that writes a coil takes it back: hotfire closes PB2 once, and a
             # left-over manual PB2 open must not re-open it on the next scan
@@ -846,6 +873,9 @@ class Simulator:
         """Atomic: every name is checked before anything is applied."""
         plan: list[tuple[str, str, Any]] = []
         unknown: list[str] = []
+        # one write may disable a loop and hand its solenoid to the operator
+        enabling = {loop: bool(v) for k, v in values.items() for loop in self._bb
+                    if str(k).lower() == f"hmi.bb.{loop}.enable"}
         for name, value in values.items():
             key = str(name)
             low = key.lower()
@@ -854,7 +884,7 @@ class Simulator:
                 raise SimRejected(f"{key} is an input tag and is read-only",
                                   code="read_only", details={"name": key})
             if up in self._output_set:
-                self._check_manual_write(self._output_set[up])
+                self._check_manual_write(self._output_set[up], enabling)
                 plan.append(("output", self._output_set[up], bool(value)))
             elif low.startswith("plc.globals."):
                 resolved = self._resolve_global(key[len("plc.globals."):])
@@ -912,10 +942,24 @@ class Simulator:
                 loop, field_ = target.split(".")
                 self._bb[loop][field_] = bool(value) if field_ == "enable" else float(value)
                 self._mirror_bb(loop)
+                sol = self.cfg.bb_globals[loop].solenoid
+                if field_ == "enable" and self._bb[loop]["enable"] and sol in self._manual:
+                    # an enabled loop owns its solenoid (D17); inside its band it writes
+                    # nothing, so a left-over manual open would keep pressing
+                    del self._manual[sol]
+                    self._emit("warn", f"manual command released to the {loop} bang-bang loop: "
+                                       f"{self._alias.get(sol, sol)} ({sol})", "hmi")
                 self._emit("info", f"bang-bang {loop}: {field_} = "
                                    f"{self._bb[loop][field_]}", "hmi")
 
-    def _check_manual_write(self, tag: str) -> None:
+    def _loop_for(self, tag: str) -> str | None:
+        """The bang-bang loop whose solenoid this output is, if any."""
+        for loop in self._bb:
+            if self.cfg.bb_globals[loop].solenoid == tag:
+                return loop
+        return None
+
+    def _check_manual_write(self, tag: str, enabling: Mapping[str, bool]) -> None:
         if self._abort_latched:
             raise SimRejected(f"{tag}: an abort is latched and owns every output until the "
                               f"abort sequence completes", code="abort_active",
@@ -928,6 +972,11 @@ class Simulator:
         if not self._running:
             raise SimRejected(f"{tag}: the PLC is stopped and outputs are held at their "
                               f"safe state", code="rejected", details={"name": tag})
+        loop = self._loop_for(tag)
+        if loop is not None and enabling.get(loop, self._bb[loop]["enable"]):
+            raise SimRejected(f"{tag}: the {loop} bang-bang loop is enabled and owns it; "
+                              f"disable the loop to actuate {tag} by hand",
+                              code="rejected", details={"name": tag, "loop": loop})
 
     def _resolve_global(self, name: str) -> str | None:
         for gname in self._rt.globals():

@@ -12,10 +12,12 @@ type Overrides = {
   manual_allowed?: boolean;
   loxOff?: string[];
   fuelOff?: string[];
+  loxEnabled?: boolean;
 };
 
 function state(o: Overrides = {}): StateMsg {
   const loop = { setpoint: 900, deadband: 15, enable: false, state: 'OFF' as const };
+  const lox = { ...loop, enable: o.loxEnabled ?? false };
   return {
     type: 'state',
     t: 10,
@@ -27,7 +29,7 @@ function state(o: Overrides = {}): StateMsg {
     plc: { running: o.running ?? true, abort_active: o.latched ?? false, faults: [], halted: [], sfc: {}, globals: {}, forced: {} },
     hmi: {
       abort: false,
-      bb: { lox: { ...loop, abort_off: o.loxOff ?? [] }, fuel: { ...loop, abort_off: o.fuelOff ?? [] } },
+      bb: { lox: { ...lox, abort_off: o.loxOff ?? [] }, fuel: { ...loop, abort_off: o.fuelOff ?? [] } },
       manual_allowed: o.manual_allowed ?? !(o.latched ?? false),
       active_sequence: o.active_sequence ?? null,
     },
@@ -81,6 +83,14 @@ describe('abort lockouts (D12/D14)', () => {
     expect(lockoutReason(state({ active_sequence: 'hotfire' }), 'valve')).toMatch(/hotfire/);
     expect(lockoutReason(state({ running: false }), 'valve')).toBe('PLC stopped');
     expect(lockoutReason(state({ manual_allowed: false }), 'valve')).toMatch(/manual/);
+  });
+
+  it('leaves a loop solenoid to the operator only while that loop is disabled (D17)', () => {
+    const enabled = state({ loxEnabled: true });
+    expect(lockoutReason(enabled, 'valve', undefined, 'S1')).toMatch(/LOX bang-bang loop enabled.*S1/);
+    expect(lockoutReason(enabled, 'valve', undefined, 'S2')).toBeNull();
+    expect(lockoutReason(enabled, 'valve', undefined, 'PB2')).toBeNull();
+    expect(lockoutReason(state(), 'valve', undefined, 'S1')).toBeNull();
   });
 });
 

@@ -49,6 +49,8 @@ program.load     {"programs": [{"name", "language", "source", "role"?}, ...]}   
                  # refused with abort_active while an abort is latched
 program.list     {}                                   # -> program_list
 plc.run / plc.stop / plc.reset / plc.clear_faults      {}   # plc.stop and plc.reset are refused with abort_active while latched; plc.stop drops an abort request not yet latched; plc.reset re-arms programs an abort switched off
+                 # plc.stop puts every valve in its default state and clears manual commands, output forces, sequences,
+                 # bang-bang enables and PLC variables, so nothing moves on the next plc.run (D17)
 plc.force        {"name": "PT3", "value": 900.0}      # input tag, output tag or variable; plc.unforce {"name"}. Output forces are refused while latched
 sim.reset        {"initial": {"bottle_psi": 4000, "lox_ullage_psi": 0, "fuel_ullage_psi": 0, "lox_mass_lbm": 60, "fuel_mass_lbm": 40, "muscle_bus_psi": 100}}   # all optional
                  # allowed while latched: the instructor reset, which clears the latch
@@ -175,10 +177,14 @@ rule trusts the label on its own:
 2. A sequence is running: output writes are rejected with `rejected` ("sequence active"); stop it first.
    Manual commands set before the start stay in force (D16), except on a coil the running chart
    writes, which releases that coil's manual command.
-3. Otherwise a write to an output tag sets the manual command for that valve. Regulation programs
-   that write the same coil every scan win over manual commands (disable the loop to move S1/S2 by
-   hand). Manual commands persist until overwritten or an abort latches, and are cleared to safe on
-   `plc.reset` and `sim.reset`.
+3. Otherwise a write to an output tag sets the manual command for that valve.
+   - **Bang-bang solenoids (D17).** A bang-bang loop owns its solenoid (S1 for `lox`, S2 for `fuel`)
+     only while enabled. A write to it then gets `rejected` with `details: {name, loop}`; send
+     `hmi.bb.<loop>.enable=false` first, or in the same write. Disabling a loop closes its solenoid
+     once and hands it to the operator. Enabling a loop releases a manual command on its solenoid.
+   - **Other programs** that write a coil during a scan win over the manual command for that scan.
+   - **Lifetime.** Manual commands persist until overwritten. An abort latch, `plc.stop`,
+     `plc.reset` and `sim.reset` clear them.
 4. Auto-abort thresholds are evaluated first in every scan while the PLC runs, regardless of mode,
    against the real card readings rather than forced values.
 

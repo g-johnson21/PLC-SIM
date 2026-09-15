@@ -2,13 +2,14 @@
   "version": 1,
   "language": "LD",
   "name": "bangbang_fuel",
-  "description": "Fuel tank bang-bang pressurisation in ladder form: PT13 -> S2. Same hysteresis as bangbang_lox; setpoint and deadband are operator-set at runtime (initial values recorded from the stand's last pre-fire configuration, 2026-09-11).",
+  "description": "Fuel tank bang-bang pressurisation in ladder form: PT13 -> S2. Same hysteresis as bangbang_lox; setpoint and deadband are operator-set at runtime (initial values recorded from the stand's last pre-fire configuration, 2026-09-11). The loop drives S2 only while enabled (decisions.md D17): disabled, it closes S2 once and then leaves it to the ground controller.",
   "vars": [
     {"name": "setpoint_fuel", "type": "REAL", "scope": "VAR_GLOBAL", "init": 870.0, "comment": "psi, operator-set"},
     {"name": "deadband_fuel", "type": "REAL", "scope": "VAR_GLOBAL", "init": 15.0, "comment": "psi, operator-set"},
     {"name": "bb_fuel_enable", "type": "BOOL", "scope": "VAR_GLOBAL", "init": false},
     {"name": "lo", "type": "REAL", "scope": "VAR", "comment": "setpoint - deadband"},
-    {"name": "hi", "type": "REAL", "scope": "VAR", "comment": "setpoint + deadband"}
+    {"name": "hi", "type": "REAL", "scope": "VAR", "comment": "setpoint + deadband"},
+    {"name": "was_enabled", "type": "BOOL", "scope": "VAR", "init": false, "comment": "bb_fuel_enable on the previous scan"}
   ],
   "rungs": [
     {
@@ -24,7 +25,7 @@
     },
     {
       "id": "r2",
-      "comment": "Below the band: open the fuel press solenoid",
+      "comment": "Enabled and below the band: open the fuel press solenoid",
       "logic": {
         "type": "series",
         "elements": [
@@ -36,7 +37,7 @@
     },
     {
       "id": "r3",
-      "comment": "Above the band, or loop disabled: close it",
+      "comment": "Enabled and above the band, or disabled on this scan: close it",
       "logic": {
         "type": "series",
         "elements": [
@@ -51,10 +52,27 @@
                   {"id": "r3.gt", "type": "compare", "op": "GT", "a": "PT13", "b": "hi"}
                 ]
               },
-              {"id": "r3.dis", "type": "contact", "kind": "NC", "operand": "bb_fuel_enable", "comment": "disabled -> force closed"}
+              {
+                "type": "series",
+                "elements": [
+                  {"id": "r3.dis", "type": "contact", "kind": "NC", "operand": "bb_fuel_enable"},
+                  {"id": "r3.was", "type": "contact", "kind": "NO", "operand": "was_enabled", "comment": "disabled this scan -> close once"}
+                ]
+              }
             ]
           },
           {"id": "r3.rst", "type": "coil", "kind": "RESET", "operand": "S2"}
+        ]
+      }
+    },
+    {
+      "id": "r4",
+      "comment": "Remember the enable for the next scan; while disabled the loop leaves S2 to the GC",
+      "logic": {
+        "type": "series",
+        "elements": [
+          {"id": "r4.en", "type": "contact", "kind": "NO", "operand": "bb_fuel_enable"},
+          {"id": "r4.was", "type": "coil", "kind": "COIL", "operand": "was_enabled"}
         ]
       }
     }

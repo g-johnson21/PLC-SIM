@@ -85,6 +85,35 @@ describe('mock transport: abort lifecycle', () => {
     expect(client.snapshot.state?.abort.tripped).toBeNull();
   });
 
+  it('clears everything that could move a valve when the PLC stops (D17)', async () => {
+    const client = await connected();
+    await send(client, { type: 'plc.run' });
+    await send(client, { type: 'write', values: { PB1: false, 'hmi.bb.lox.enable': true } });
+    await send(client, { type: 'plc.force', name: 'PB2', value: true });
+    expect(await send(client, { type: 'write', values: { PB2: false } })).toEqual({ ok: true });
+    expect(await send(client, { type: 'plc.stop' })).toEqual({ ok: true });
+    expect(await send(client, { type: 'write', values: { PB1: false } })).toMatchObject({ ok: false, code: 'rejected' });
+    await send(client, { type: 'plc.run' });
+    await vi.advanceTimersByTimeAsync(SCAN_MS);
+    const s = client.snapshot.state!;
+    expect(s.outputs).toMatchObject({ PB1: true, PB2: false });
+    expect(s.hmi.bb.lox.enable).toBe(false);
+    expect(s.plc.forced).toEqual({});
+  });
+
+  it('refuses a manual write to a loop solenoid while that loop is enabled (D17)', async () => {
+    const client = await connected();
+    await send(client, { type: 'plc.run' });
+    await send(client, { type: 'write', values: { 'hmi.bb.lox.enable': true } });
+    expect(await send(client, { type: 'write', values: { S1: true } })).toMatchObject({
+      ok: false,
+      code: 'rejected',
+      details: { name: 'S1', loop: 'lox' },
+    });
+    expect(await send(client, { type: 'write', values: { S2: true } })).toEqual({ ok: true });
+    expect(await send(client, { type: 'write', values: { 'hmi.bb.lox.enable': false, S1: true } })).toEqual({ ok: true });
+  });
+
   it('acknowledges abort.clear when not latched and refuses writing hmi.abort false', async () => {
     const client = await connected();
     expect(await send(client, { type: 'abort.clear' })).toEqual({ ok: true });

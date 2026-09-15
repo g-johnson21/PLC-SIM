@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from .helpers import (card_commands, example, hmi, latched, make_sim, normally_open,
-                      open_valves, outputs, st, sfc, texts)
+                      open_valves, outputs, refused, st, sfc, texts)
 
 PULSE = st("pulse", "IF go THEN PB2 := TRUE; END_IF;", "VAR_GLOBAL go : BOOL := FALSE; END_VAR")
 FAULTY = st("faulty", "PB2 := TRUE;\nIF go THEN q := 1 / z; END_IF;",
@@ -30,21 +30,19 @@ def test_a_manual_command_drives_a_coil_no_program_writes():
 
 
 def test_a_program_writing_a_coil_every_scan_beats_a_manual_command():
-    sim = make_sim()
+    sim = make_sim(examples=False)
+    sim.load_programs([st("hold_pb2", "PB2 := TRUE;")])
     sim.plc_run()
-    sim.write({"hmi.bb.lox.enable": True})
+    sim.step()
+    sim.write({"PB2": False})
     sim.run_scans(3)
-    assert outputs(sim)["S1"] is True
-    sim.write({"S1": False})
-    sim.run_scans(3)
-    assert outputs(sim)["S1"] is True and hmi(sim)["manual"] == {"S1": False}
+    assert outputs(sim)["PB2"] is True and hmi(sim)["manual"] == {"PB2": False}
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "docs/protocol.md arbitration rule 3 says to disable the loop to move S1/S2 by hand, but "
-    "bangbang_lox.st and bangbang_fuel.ld.json write their solenoid FALSE every scan while "
-    "disabled, so rule 1 keeps a manual open from ever reaching the cards"))
-@pytest.mark.parametrize("loop, tag", [("lox", "S1"), ("fuel", "S2")])
+LOOPS = [("lox", "S1"), ("fuel", "S2")]
+
+
+@pytest.mark.parametrize("loop, tag", LOOPS)
 def test_a_disabled_loop_leaves_its_solenoid_to_manual_control(loop, tag):
     sim = make_sim()
     sim.plc_run()
@@ -53,6 +51,48 @@ def test_a_disabled_loop_leaves_its_solenoid_to_manual_control(loop, tag):
     sim.write({tag: True})
     sim.run_scans(3)
     assert outputs(sim)[tag] is True
+
+
+@pytest.mark.parametrize("loop, tag", LOOPS)
+def test_an_enabled_loop_owns_its_solenoid_until_it_is_disabled(loop, tag):
+    sim = make_sim()
+    sim.plc_run()
+    sim.write({f"hmi.bb.{loop}.enable": True})
+    sim.run_scans(3)
+    assert outputs(sim)[tag] is True
+    exc = refused("rejected", sim.write, {tag: False})
+    assert exc.details == {"name": tag, "loop": loop}
+    refused("rejected", sim.write, {"PB2": True, tag: False})
+    assert hmi(sim)["manual"] == {}
+    sim.write({f"hmi.bb.{loop}.enable": False, tag: True})
+    sim.run_scans(3)
+    assert outputs(sim)[tag] is True and hmi(sim)["manual"] == {tag: True}
+
+
+@pytest.mark.parametrize("loop, tag", LOOPS)
+def test_disabling_a_loop_mid_press_closes_its_solenoid_and_lets_go(loop, tag):
+    sim = make_sim()
+    sim.plc_run()
+    sim.write({f"hmi.bb.{loop}.enable": True})
+    sim.run_scans(3)
+    assert outputs(sim)[tag] is True
+    sim.write({f"hmi.bb.{loop}.enable": False})
+    sim.step()
+    assert outputs(sim)[tag] is False and hmi(sim)["manual"] == {}
+    sim.run_for(1.0)
+    assert outputs(sim)[tag] is False
+
+
+def test_enabling_a_loop_releases_a_manual_command_on_its_solenoid():
+    sim = make_sim()
+    sim.plc_run()
+    sim.step()
+    sim.write({"S1": True})
+    sim.step()
+    sim.write({"hmi.bb.lox.enable": True})
+    assert hmi(sim)["manual"] == {}
+    assert any(t.startswith("manual command released to the lox bang-bang loop") and "(S1)" in t
+               for t in texts(sim, "warn"))
 
 
 def test_a_held_coil_keeps_the_plc_image_until_a_manual_command_overrides_it():

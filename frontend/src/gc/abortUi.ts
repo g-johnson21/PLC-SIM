@@ -1,8 +1,11 @@
-// Abort lifecycle as the panel sees it (docs/protocol.md "Abort lifecycle", D12/D14).
+// Abort lifecycle and manual-control lockouts as the panel sees them (docs/protocol.md, D12/D14/D17).
 // Every lockout here mirrors a refusal the backend makes; the backend stays the authority.
 import type { StateMsg } from '../protocol/types';
 
 export type Loop = 'lox' | 'fuel';
+
+/** Each bang-bang loop's solenoid (the backend's SimConfig.bb_globals). An enabled loop owns it (D17). */
+export const LOOP_SOLENOID: Record<Loop, string> = { lox: 'S1', fuel: 'S2' };
 
 export type PanelAction =
   | 'abort'
@@ -42,7 +45,12 @@ export function allAbortOff(state: StateMsg | null | undefined): string[] {
 }
 
 /** Why the backend would refuse this action right now, or null when it would accept it. */
-export function lockoutReason(state: StateMsg | null | undefined, action: PanelAction, loop?: Loop): string | null {
+export function lockoutReason(
+  state: StateMsg | null | undefined,
+  action: PanelAction,
+  loop?: Loop,
+  tag?: string,
+): string | null {
   if (!state) return 'no connection';
   if (action === 'abort') {
     return state.plc.running ? null : 'PLC stopped: every output is already fail-safe, nothing to abort';
@@ -56,6 +64,10 @@ export function lockoutReason(state: StateMsg | null | undefined, action: PanelA
     if (state.hmi.active_sequence) return `sequence "${state.hmi.active_sequence}" active`;
     if (!state.plc.running) return 'PLC stopped';
     if (!state.hmi.manual_allowed) return 'manual control unavailable';
+    const owner = (Object.keys(LOOP_SOLENOID) as Loop[]).find((l) => LOOP_SOLENOID[l] === tag);
+    if (owner && state.hmi.bb[owner]?.enable) {
+      return `${owner.toUpperCase()} bang-bang loop enabled: disable it to actuate ${tag} by hand`;
+    }
   }
   return null;
 }

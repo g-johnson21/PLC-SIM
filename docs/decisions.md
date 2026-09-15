@@ -202,3 +202,26 @@ telemetry, so flow areas are fitted from the pressure-rise rate at 40 Hz.
   Abort-chain-only coils such as PB1/PB3 keep their manual commands until the abort clears them.
 - **No tank or line temperature physics.** The vent-open mismatch in D15 stays a documented
   limitation.
+
+## D17. A stopped PLC stays safe; a bang-bang loop owns its solenoid only while enabled (2026-09-15, user)
+- **A stopped PLC returns the stand to its safe state and keeps it there when it runs again.** Every
+  valve goes to its default state. In the user's words: "Things shouldn't be happening without the
+  ground controller being aware and in control." `plc.stop` therefore clears everything that could
+  command a valve on the next `plc.run`: manual commands, output forces, running sequences, both
+  bang-bang enables and the PLC output image. D16 already said a stop drops manual commands, but
+  the code did not (task 5, defect 1).
+- **Orchestrator refinement (reversible):** the stop is a cold restart of the PLC runtime.
+  - Program variables return to their declared values, so an armed `abort_monitor` is disarmed and
+    operator-written `plc.globals` are lost.
+  - Faults clear, and halted programs restart on run.
+  - Kept: the program set, input forces, the HMI setpoints and deadbands (re-mirrored), and the
+    programs an abort switched off (D14).
+  - A program that writes an output unconditionally still drives it once the ground controller runs
+    the PLC.
+- **A bang-bang loop controls its solenoid only while enabled; disabled, the ground controller can
+  actuate it.** Both example loops write the solenoid only while enabled. On the scan they are
+  disabled they close it once, so a loop disabled mid-press does not leave S1/S2 held open.
+- **Orchestrator refinement (reversible):** while a loop is enabled, manual writes to its solenoid
+  are refused with `rejected` and `details.loop`, and enabling a loop releases a manual command on
+  its solenoid with a `[warn]` event. Inside the hysteresis band the loop writes nothing, so a
+  left-over manual open would otherwise keep pressing.

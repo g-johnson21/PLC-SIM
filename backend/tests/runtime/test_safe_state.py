@@ -120,22 +120,59 @@ def test_a_stopped_plc_holds_every_coil_safe_and_refuses_manual_writes():
     sim.step()
     assert open_valves(sim) == normally_open(sim) and hmi(sim)["manual_allowed"] is False
     refused("rejected", sim.write, {"PB2": True})
-    sim.plc_run()
-    sim.run_scans(3)
-    assert outputs(sim)["S1"] is True
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "docs/runtime.md §2 and D16 say a stopped PLC drops manual commands, but the drop lives in "
-    "Simulator._arbitrate, which never runs while stopped: hmi.manual keeps PB1=False and the "
-    "stale close re-seals the vent on plc.run"))
-def test_a_manual_command_does_not_survive_a_plc_stop():
+def test_after_a_stop_the_stand_stays_safe_when_the_plc_runs_again():
     sim = make_sim()
     sim.plc_run()
-    sim.write({"PB1": False})
-    sim.run_scans(3)
+    sim.write({"PB1": False, "PB3": False, "hmi.bb.lox.enable": True,
+               "hmi.bb.lox.setpoint": 700.0})
+    sim.force("S4", True)
+    sim.force("PT1", 0.0)
+    sim.sequence_start("hotfire")
+    sim.run_for(1.0)
+    assert {"PB2", "PB4", "S1", "S4"} <= open_valves(sim) and not outputs(sim)["PB1"]
+
     sim.plc_stop()
+    snap = sim.snapshot(["hmi", "plc"])
+    assert snap["hmi"]["manual"] == {} and set(snap["plc"]["forced"]) == {"PT1"}
+    assert snap["hmi"]["bb"]["lox"]["enable"] is False and snap["hmi"]["bb"]["lox"]["setpoint"] == 700.0
+    assert snap["plc"]["sfc"]["hotfire"]["running"] is False
+    [cleared] = [t for t in texts(sim, "warn") if t.startswith("cleared so nothing moves on plc.run")]
+    assert all(part in cleared for part in ("PB1", "S4", "hotfire", "lox"))
+
+    sim.plc_run()
+    for _ in range(round(10.0 * sim.scan_hz)):
+        sim.step()
+        assert open_valves(sim) == normally_open(sim)
+    assert sim.read(["plc.globals.setpoint"])["plc.globals.setpoint"] == 700.0
+    assert sim.active_sequence() is None and hmi(sim)["manual_allowed"] is True
+
+
+def test_a_stop_is_a_cold_restart_of_the_program_variables():
+    latch = st("latch_pb2", "IF go THEN held := TRUE; END_IF;\nPB2 := held;",
+               "VAR_GLOBAL go : BOOL := FALSE; END_VAR\nVAR held : BOOL := FALSE; END_VAR")
+    sim = make_sim(examples=False)
+    sim.load_programs([latch])
+    sim.plc_run()
+    sim.write({"plc.globals.go": True})
     sim.step()
+    sim.write({"plc.globals.go": False})
+    sim.run_scans(3)
+    assert outputs(sim)["PB2"] is True
+    sim.plc_stop()
     sim.plc_run()
     sim.run_scans(3)
-    assert hmi(sim)["manual"] == {} and outputs(sim)["PB1"] is True
+    assert outputs(sim)["PB2"] is False
+
+
+def test_programs_an_abort_switched_off_stay_off_across_a_stop():
+    sim = make_sim()
+    abort_hotfire(sim)
+    run_to_return(sim)
+    sim.plc_stop()
+    sim.plc_run()
+    sim.run_scans(3)
+    assert enabled(sim)["bangbang_lox"] is False
+    assert hmi(sim)["bb"]["lox"]["abort_off"] == ["bangbang_lox"]
+    refused("rejected", sim.write, {"hmi.bb.lox.enable": True})

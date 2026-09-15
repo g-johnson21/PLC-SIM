@@ -76,6 +76,17 @@ yet, so it cannot latch later on `plc_run()`. Step 1 also still runs: a real sca
 its input image, but freezing the operator's tank-pressure display is a worse lie than
 keeping it live, and a runtime that is not scanning does nothing with the values.
 
+**A stop stays safe on the next run (D17).** `plc_stop()` leaves nothing behind that could command a
+valve when the PLC runs again:
+* it drops manual commands and output forces, stops every chart and turns both bang-bang enables off;
+* it gives the PLC runtime a cold restart, so variables return to their declared values, faults clear
+  and the output image and held coils are forgotten;
+* it keeps the program set, input forces, the HMI setpoints and deadbands, and the programs an abort
+  switched off.
+
+One `[warn]` event lists what was cleared. After `plc_run()` every valve stays in its default state
+until the operator commands one, except where a program writes an output unconditionally.
+
 **One scan of latency on the program-computed request.** `auto_abort_request` is
 computed by a program during step 5 and read by step 2 of the *next* scan — 20 ms at
 50 Hz. That is inherent to a monitor program that publishes a bit; the threshold table
@@ -150,6 +161,8 @@ running, no abort is latched, and no sequence is active.
 * while a sequence is active → `rejected` ("sequence active")
 * while the PLC is stopped → `rejected` (outputs are held safe; a write that silently
   took effect on the next `plc.run` would be a trap)
+* to a bang-bang loop's solenoid while that loop is enabled → `rejected`, with `details.loop` (§4).
+  A write that disables the loop in the same call is accepted
 
 Existing manual commands **stay in force when a sequence starts** (D16): closing the tank
 vents before a hotfire keeps them closed through the burn. Only an abort latch (or a
@@ -296,6 +309,15 @@ Startup values: LOX 904 / 15, fuel 870 / 15, both disabled — the recorded pre-
 configuration of 2026-09-11, labelled as such in `SimConfig.bb_defaults`, not a
 calibrated setpoint. Feedback is PT3 → S1 and PT13 → S2 (D2).
 
+**Solenoid ownership (D17).** A loop controls its solenoid only while enabled.
+* **The example programs** write S1/S2 only while their enable is true, and once more, closed, on
+  the scan it goes false. A loop disabled mid-press therefore closes its solenoid and then leaves it
+  to the operator.
+* **While a loop is enabled,** the scan loop refuses manual writes to its solenoid.
+* **Enabling a loop** drops any manual command left on the solenoid, with a
+  `[warn] manual command released to the <loop> bang-bang loop` event. Inside its band the loop
+  writes nothing, so a manual open would otherwise keep pressing.
+
 `hmi.bb.<loop>.state` is derived, read-only: `OFF` when the enable is false or the
 loop's program has been switched off by an abort and not yet re-armed, `PRESS`
 when the loop's solenoid is open in the final output image, `HOLD` otherwise.
@@ -389,10 +411,11 @@ Six scripted, deterministic blocks:
   output force, loop enable and `abort_clear` are refused and a setpoint edit is
   accepted. Control returns 5.32 s after the latch with no clear command. The LOX loop
   cannot be enabled again until `plc_reset()`.
-* **C** manual arbitration: a manual valve command, a regulation loop beating a manual
-  command for S1, a sequence locking manual control out and handing it back.
+* **C** manual arbitration: a manual valve command, a manual S1 write refused while the LOX loop
+  is enabled and accepted once it is disabled, and a sequence locking manual control out and
+  handing it back.
 * **D** the PLC stopped: outputs at their fail-safe state, `abort()` refused, plant still
-  integrating.
+  integrating, and nothing moving when the PLC runs again.
 * **E** a held latch: a PT1 row standing in for a failed gauge holds the latch after the
   chain ends. Forcing PT1 does not release it; disabling the row does.
 

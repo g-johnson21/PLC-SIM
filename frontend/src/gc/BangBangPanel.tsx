@@ -121,6 +121,11 @@ export function BangBangPanel({ sim, loop }: Props) {
           Switched off by the abort ({offSinceAbort.join(', ')}). PLC Reset re-arms it.
         </div>
       )}
+      {!latched && bb?.enable && (
+        <div className="lockout-note">
+          Enabled: the loop owns {meta.solenoid}. Disable it to actuate {meta.solenoid} by hand.
+        </div>
+      )}
       {toast && <div className="panel-toast">{toast}</div>}
     </div>
   );

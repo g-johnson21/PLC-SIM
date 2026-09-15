@@ -225,13 +225,19 @@ VAR_GLOBAL
     deadband : REAL := 15.0;
     bb_lox_enable : BOOL := FALSE;
 END_VAR
-    IF NOT bb_lox_enable THEN
-        S1 := FALSE;
-    ELSIF PT3 < setpoint - deadband THEN
-        S1 := TRUE;
-    ELSIF PT3 > setpoint + deadband THEN
-        S1 := FALSE;
-    END_IF;   // no ELSE: inside the band S1 holds
+VAR
+    was_enabled : BOOL := FALSE;   (* bb_lox_enable on the previous scan *)
+END_VAR
+    IF bb_lox_enable THEN
+        IF PT3 < setpoint - deadband THEN
+            S1 := TRUE;
+        ELSIF PT3 > setpoint + deadband THEN
+            S1 := FALSE;
+        END_IF;   // no ELSE: inside the band S1 holds
+    ELSIF was_enabled THEN
+        S1 := FALSE;   (* disabled this scan: close once, then S1 is the GC's (D17) *)
+    END_IF;
+    was_enabled := bb_lox_enable;
 END_PROGRAM
 ```
 
@@ -335,7 +341,7 @@ instance name in `vars` with the matching FB type is allowed and equivalent.
 ```json
 {
   "id": "r3",
-  "comment": "Above the band, or loop disabled: close it",
+  "comment": "Enabled and above the band, or disabled on this scan: close it",
   "logic": {
     "type": "series",
     "elements": [
@@ -347,7 +353,10 @@ instance name in `vars` with the matching FB type is allowed and equivalent.
             {"id": "r3.en", "type": "contact", "kind": "NO", "operand": "bb_fuel_enable"},
             {"id": "r3.gt", "type": "compare", "op": "GT", "a": "PT13", "b": "hi"}
           ]},
-          {"id": "r3.dis", "type": "contact", "kind": "NC", "operand": "bb_fuel_enable"}
+          {"type": "series", "elements": [
+            {"id": "r3.dis", "type": "contact", "kind": "NC", "operand": "bb_fuel_enable"},
+            {"id": "r3.was", "type": "contact", "kind": "NO", "operand": "was_enabled"}
+          ]}
         ]
       },
       {"id": "r3.rst", "type": "coil", "kind": "RESET", "operand": "S2"}
@@ -359,11 +368,18 @@ instance name in `vars` with the matching FB type is allowed and equivalent.
 `ladder_to_text(doc)` renders exactly this rung as:
 
 ```text
-Rung 0 [r3]  Above the band, or loop disabled: close it
-        bb_fuel_enable    PT13 > hi      S2
-  |--+-------] [-------------[GT]----+--(R)----|
-     |  bb_fuel_enable               |
-     +-------]/[---------------------+
+Rung 0 [r3]  Enabled and above the band, or disabled on this scan: close it
+        bb_fuel_enable    PT13 > hi        S2
+  |--+-------] [-------------[GT]------+--(R)----|
+     |  bb_fuel_enable    was_enabled  |
+     +-------]/[--------------] [------+
+```
+
+Rung `r4` (`bb_fuel_enable` → `COIL was_enabled`) follows it, so `was_enabled` holds the previous
+scan's enable. The loop therefore writes S2 only while enabled, plus once on the scan it is
+disabled (decisions.md D17).
+
+```text
 ```
 
 The renderer is one-way (document → text) and exists for debugging and documentation; there is
@@ -625,8 +641,9 @@ known to own S1. `outputs_changed` cannot answer that. Recording is on only whil
 program body executes, so `force()` and external edits are not counted; a program that
 faults is rolled back and contributes nothing. Conditional writes behave exactly as
 the program reads: `bangbang_lox.st` writes S1 on the scans its `IF`/`ELSIF` chain
-takes a branch and writes nothing while the reading sits inside the hysteresis band,
-and an LD `SET`/`RESET` coil writes only on the scans its rung has power.
+takes a branch, plus once on the scan its enable goes false. It writes nothing while
+the reading sits inside the hysteresis band or the loop stays disabled. An LD `SET`/`RESET`
+coil writes only on the scans its rung has power.
 
 ### 7.4 Forcing
 

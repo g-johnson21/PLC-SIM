@@ -15,7 +15,7 @@ export function ValveSymbol({ sim, pos }: Props) {
   const tagInfo = findTag(sim.welcome?.tags, tag);
   const alias = VALVE_ALIAS[tag];
   const open = sim.state?.outputs[tag];
-  const blockedReason = lockoutReason(sim.state, 'valve');
+  const blockedReason = lockoutReason(sim.state, 'valve', undefined, tag);
   const manualAllowed = blockedReason === null;
   const [toast, setToast] = useState<string | null>(null);
 

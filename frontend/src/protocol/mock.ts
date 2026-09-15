@@ -30,6 +30,9 @@ const NOTICE =
 const STOPPED_ABORT =
   'the PLC is stopped: every output is already at its fail-safe state, so there is nothing to abort';
 
+// each bang-bang loop's solenoid, as the backend's SimConfig.bb_globals maps it; an enabled loop owns it (D17)
+const LOOP_SOLENOID = { lox: 'S1', fuel: 'S2' } as const;
+
 function tagEntries(): TagEntry[] {
   return DRACO_TAGS.map((t) => ({
     tag: t.name,
@@ -146,6 +149,17 @@ class MockSim {
       if (name in this.outputs && this.latched) {
         return err(id, 'abort_active', `${name}: the abort owns every output until control returns`, { name });
       }
+      if (name in this.outputs && !this.running) {
+        return err(id, 'rejected', `${name}: the PLC is stopped and outputs are held at their safe state`, { name });
+      }
+      for (const loop of ['lox', 'fuel'] as const) {
+        if (LOOP_SOLENOID[loop] !== name) continue;
+        const key = `hmi.bb.${loop}.enable`;
+        const enabled = key in values ? Boolean(values[key]) : this.hmi.bb[loop].enable;
+        if (enabled) {
+          return err(id, 'rejected', `${name}: the ${loop} bang-bang loop is enabled and owns it; disable the loop to actuate ${name} by hand`, { name, loop });
+        }
+      }
       if (name === 'hmi.abort') {
         if (!value) {
           return err(id, 'rejected', 'hmi.abort cannot be written false; an abort ends by itself when the abort sequence completes', { name });
@@ -252,11 +266,19 @@ class MockSim {
         this.running = true;
         this.event('command', 'PLC RUN', 'hmi');
         return { type: 'ack', id: msg.id };
-      case 'plc.stop':
+      case 'plc.stop': {
         if (this.latched) return this.refuseWhileLatched(msg.id, 'plc.stop');
         this.running = false;
+        // D17: leave nothing behind that could move a valve on the next plc.run
+        this.manualOutputs = {};
+        for (const name of Object.keys(this.forced)) {
+          if (name in this.outputs) delete this.forced[name];
+        }
+        const { lox, fuel } = this.hmi.bb;
+        this.hmi = { ...this.hmi, active_sequence: null, bb: { lox: { ...lox, enable: false }, fuel: { ...fuel, enable: false } } };
         this.event('command', 'PLC STOP', 'hmi');
         return { type: 'ack', id: msg.id };
+      }
       case 'plc.reset':
         if (this.latched) return this.refuseWhileLatched(msg.id, 'plc.reset');
         this.manualOutputs = {};
@@ -299,6 +321,11 @@ class MockSim {
   private setBb(loop: 'lox' | 'fuel', field: string, value: unknown) {
     const current = this.hmi.bb[loop];
     this.hmi = { ...this.hmi, bb: { ...this.hmi.bb, [loop]: { ...current, [field]: value } } };
+    const solenoid = LOOP_SOLENOID[loop];
+    if (field === 'enable' && value && solenoid in this.manualOutputs) {
+      delete this.manualOutputs[solenoid];
+      this.event('warn', `manual command released to the ${loop} bang-bang loop: ${solenoid}`, 'hmi');
+    }
   }
 
   private latch() {
